@@ -1,0 +1,24 @@
+bundle:
+  name: benefits360
+
+sync:
+  include:
+    - .build
+
+artifacts:
+  default:
+    build: uv run apx build
+
+resources:
+  apps:
+    benefits360-app:
+      name: "benefits360"
+      description: "benefits360 created with apx"
+      source_code_path: ./.build
+      config:
+        command: ["uvicorn", "benefits360.backend.app:app", "--workers", "2"]
+
+targets:
+  dev:
+    mode: development
+    default: true
