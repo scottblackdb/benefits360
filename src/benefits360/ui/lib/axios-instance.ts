@@ -8,7 +8,7 @@ export const customInstance = <T>(
   const promise = axios({
     ...config,
     ...options,
-    baseURL: "/api",
+    // Don't set baseURL here since the generated client already includes /api in the URL
     cancelToken: source.token,
     headers: {
       "Content-Type": "application/json",
