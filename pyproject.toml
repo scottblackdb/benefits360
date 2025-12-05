@@ -13,6 +13,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "apx",
     "pyright>=1.1.406",
 ]
 
@@ -32,6 +33,9 @@ source = "uv-dynamic-versioning"
 [tool.uv-dynamic-versioning]
 vcs = "git"
 format-jinja = "{{version}}"
+
+[tool.uv.sources]
+apx = { git = "https://github.com/databricks-solutions/apx.git" }
 
 [tool.hatch.build.hooks.version]
 path = "src/benefits360/_version.py"
