@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Suspense } from "react";
-import { QueryErrorResetBoundary } from "@tanstack/react-query";
+import { Suspense, useState } from "react";
+import { QueryErrorResetBoundary, useMutation } from "@tanstack/react-query";
 import { ErrorBoundary } from "react-error-boundary";
 import { useCurrentUserSuspense } from "@/lib/api";
 import selector from "@/lib/selector";
@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
 import {
   User,
   Mail,
@@ -24,6 +25,8 @@ import {
   AlertCircle,
   CheckCircle,
   XCircle,
+  Search,
+  Loader2,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_sidebar/profile")({
@@ -32,6 +35,51 @@ export const Route = createFileRoute("/_sidebar/profile")({
 
 function ProfileContent() {
   const { data: user } = useCurrentUserSuspense(selector());
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+
+  // Search mutation
+  const searchMutation = useMutation({
+    mutationFn: async (query: string) => {
+      const response = await fetch("/api/search", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query,
+          endpoint_name: "lewis",
+          index_name: "benefits360.silver.matched_people_vec",
+          limit: 10,
+        }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ detail: "Unknown error" }));
+        throw new Error(errorData.detail || `Search failed with status ${response.status}`);
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setSearchResults(data.results || []);
+    },
+    onError: (error) => {
+      console.error("Search error:", error);
+      setSearchResults([]);
+    },
+  });
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      searchMutation.mutate(searchQuery.trim());
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleSearch(e);
+    }
+  };
 
   const getInitials = () => {
     if (user.name?.given_name && user.name?.family_name) {
@@ -52,6 +100,99 @@ function ProfileContent() {
 
   return (
     <div className="space-y-6">
+      {/* Search Box */}
+      <Card className="border-primary/20">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Search className="h-5 w-5" />
+            Search People
+          </CardTitle>
+          <CardDescription>
+            Search for people by full name using vector search
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSearch} className="space-y-4">
+            <div className="flex gap-2">
+              <Input
+                type="text"
+                placeholder="Enter full name to search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className="flex-1"
+              />
+              <Button
+                type="submit"
+                disabled={searchMutation.isPending || !searchQuery.trim()}
+              >
+                {searchMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Searching...
+                  </>
+                ) : (
+                  <>
+                    <Search className="h-4 w-4 mr-2" />
+                    Search
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+
+          {/* Search Results */}
+          {searchResults.length > 0 && (
+            <div className="mt-4 space-y-2">
+              <h3 className="text-sm font-semibold">
+                Results ({searchResults.length})
+              </h3>
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {searchResults.map((result, index) => (
+                  <Card key={index} className="border-primary/10">
+                    <CardContent className="pt-4">
+                      <div className="space-y-2">
+                        {result.data.full_name && (
+                          <p className="font-semibold">
+                            {result.data.full_name}
+                          </p>
+                        )}
+                        {result.score !== null && result.score !== undefined && (
+                          <p className="text-xs text-muted-foreground">
+                            Score: {result.score.toFixed(4)}
+                          </p>
+                        )}
+                        {Object.entries(result.data)
+                          .filter(([key]) => key !== "full_name" && key !== "score")
+                          .map(([key, value]) => (
+                            <div key={key} className="text-sm">
+                              <span className="font-medium">{key}:</span>{" "}
+                              <span className="text-muted-foreground">
+                                {String(value)}
+                              </span>
+                            </div>
+                          ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {searchMutation.isError && (
+            <div className="mt-4 p-3 rounded-md bg-destructive/10 border border-destructive/20">
+              <p className="text-sm font-medium text-destructive">Search failed</p>
+              <p className="text-xs text-destructive/80 mt-1">
+                {searchMutation.error instanceof Error
+                  ? searchMutation.error.message
+                  : "An error occurred while searching. Please try again."}
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Header Card */}
       <Card className="border-primary/20">
         <CardContent className="pt-6">
