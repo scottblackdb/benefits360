@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional, List, Any
+from datetime import date
 from .. import __version__
 
 
@@ -26,3 +27,14 @@ class VectorSearchResult(BaseModel):
 class VectorSearchResponse(BaseModel):
     results: List[VectorSearchResult]
     query: str
+
+
+class PersonProfileOut(BaseModel):
+    person_id: Optional[str] = None
+    medical_id: Optional[str] = None
+    snap_id: Optional[str] = None
+    assistance_id: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    birthdate: Optional[date] = None
+    full_name: Optional[str] = None

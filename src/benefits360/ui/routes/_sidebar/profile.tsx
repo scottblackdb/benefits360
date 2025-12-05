@@ -33,10 +33,22 @@ export const Route = createFileRoute("/_sidebar/profile")({
   component: () => <Profile />,
 });
 
+interface PersonProfile {
+  person_id?: string;
+  medical_id?: string;
+  snap_id?: string;
+  assistance_id?: string;
+  first_name?: string;
+  last_name?: string;
+  birthdate?: string;
+  full_name?: string;
+}
+
 function ProfileContent() {
   const { data: user } = useCurrentUserSuspense(selector());
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [selectedProfile, setSelectedProfile] = useState<PersonProfile | null>(null);
 
   // Search mutation
   const searchMutation = useMutation({
@@ -61,10 +73,36 @@ function ProfileContent() {
     },
     onSuccess: (data) => {
       setSearchResults(data.results || []);
+      setSelectedProfile(null); // Clear selected profile when new search is performed
     },
     onError: (error) => {
       console.error("Search error:", error);
       setSearchResults([]);
+      setSelectedProfile(null);
+    },
+  });
+
+  // Profile load mutation
+  const profileMutation = useMutation({
+    mutationFn: async (personId: string) => {
+      const response = await fetch(`/api/profile/${personId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ detail: "Unknown error" }));
+        throw new Error(errorData.detail || `Failed to load profile with status ${response.status}`);
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setSelectedProfile(data);
+    },
+    onError: (error) => {
+      console.error("Profile load error:", error);
+      setSelectedProfile(null);
     },
   });
 
@@ -148,34 +186,52 @@ function ProfileContent() {
                 Results ({searchResults.length})
               </h3>
               <div className="space-y-2 max-h-96 overflow-y-auto">
-                {searchResults.map((result, index) => (
-                  <Card key={index} className="border-primary/10">
-                    <CardContent className="pt-4">
-                      <div className="space-y-2">
-                        {result.data.full_name && (
-                          <p className="font-semibold">
-                            {result.data.full_name}
-                          </p>
-                        )}
-                        {result.score !== null && result.score !== undefined && (
-                          <p className="text-xs text-muted-foreground">
-                            Score: {result.score.toFixed(4)}
-                          </p>
-                        )}
-                        {Object.entries(result.data)
-                          .filter(([key]) => key !== "full_name" && key !== "score")
-                          .map(([key, value]) => (
-                            <div key={key} className="text-sm">
-                              <span className="font-medium">{key}:</span>{" "}
-                              <span className="text-muted-foreground">
-                                {String(value)}
-                              </span>
-                            </div>
-                          ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                {searchResults.map((result, index) => {
+                  const personId = result.data.person_id;
+                  const isClickable = !!personId;
+                  
+                  return (
+                    <Card 
+                      key={index} 
+                      className={`border-primary/10 ${isClickable ? "cursor-pointer hover:border-primary/30 transition-colors" : ""}`}
+                      onClick={() => {
+                        if (personId) {
+                          profileMutation.mutate(personId);
+                        }
+                      }}
+                    >
+                      <CardContent className="pt-4">
+                        <div className="space-y-2">
+                          {result.data.full_name && (
+                            <p className="font-semibold">
+                              {result.data.full_name}
+                            </p>
+                          )}
+                          {result.score !== null && result.score !== undefined && (
+                            <p className="text-xs text-muted-foreground">
+                              Score: {result.score.toFixed(4)}
+                            </p>
+                          )}
+                          {Object.entries(result.data)
+                            .filter(([key]) => key !== "full_name" && key !== "score")
+                            .map(([key, value]) => (
+                              <div key={key} className="text-sm">
+                                <span className="font-medium">{key}:</span>{" "}
+                                <span className="text-muted-foreground">
+                                  {String(value)}
+                                </span>
+                              </div>
+                            ))}
+                          {isClickable && (
+                            <p className="text-xs text-primary mt-2">
+                              Click to view full profile →
+                            </p>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -190,8 +246,100 @@ function ProfileContent() {
               </p>
             </div>
           )}
+
+          {profileMutation.isError && (
+            <div className="mt-4 p-3 rounded-md bg-destructive/10 border border-destructive/20">
+              <p className="text-sm font-medium text-destructive">Failed to load profile</p>
+              <p className="text-xs text-destructive/80 mt-1">
+                {profileMutation.error instanceof Error
+                  ? profileMutation.error.message
+                  : "An error occurred while loading the profile. Please try again."}
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      {/* Selected Profile Display */}
+      {selectedProfile && (
+        <Card className="border-primary/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Profile Details
+            </CardTitle>
+            <CardDescription>
+              Full profile information from the database
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {selectedProfile.full_name && (
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Full Name</p>
+                <p className="text-lg font-semibold">{selectedProfile.full_name}</p>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {selectedProfile.first_name && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">First Name</p>
+                  <p className="text-base">{selectedProfile.first_name}</p>
+                </div>
+              )}
+
+              {selectedProfile.last_name && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Last Name</p>
+                  <p className="text-base">{selectedProfile.last_name}</p>
+                </div>
+              )}
+
+              {selectedProfile.birthdate && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Birth Date</p>
+                  <p className="text-base">{selectedProfile.birthdate}</p>
+                </div>
+              )}
+
+              {selectedProfile.person_id && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Person ID</p>
+                  <p className="text-sm font-mono">{selectedProfile.person_id}</p>
+                </div>
+              )}
+
+              {selectedProfile.medical_id && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Medical ID</p>
+                  <p className="text-sm font-mono">{selectedProfile.medical_id}</p>
+                </div>
+              )}
+
+              {selectedProfile.snap_id && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">SNAP ID</p>
+                  <p className="text-sm font-mono">{selectedProfile.snap_id}</p>
+                </div>
+              )}
+
+              {selectedProfile.assistance_id && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Assistance ID</p>
+                  <p className="text-sm font-mono">{selectedProfile.assistance_id}</p>
+                </div>
+              )}
+            </div>
+
+            {profileMutation.isPending && (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-sm">Loading profile...</span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Header Card */}
       <Card className="border-primary/20">

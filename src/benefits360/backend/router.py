@@ -1,6 +1,6 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
-from .models import VersionOut, VectorSearchRequest, VectorSearchResponse, VectorSearchResult
+from .models import VersionOut, VectorSearchRequest, VectorSearchResponse, VectorSearchResult, PersonProfileOut
 from databricks.sdk import WorkspaceClient
 from databricks.sdk.service.iam import User as UserOut
 from .dependencies import get_obo_ws
@@ -285,4 +285,80 @@ def search_people(
         raise HTTPException(
             status_code=500,
             detail=f"Vector search failed: {str(e)}"
+        )
+
+
+@api.get("/profile/{person_id}", response_model=PersonProfileOut, operation_id="getPersonProfile")
+def get_person_profile(
+    person_id: str,
+    obo_ws: Annotated[WorkspaceClient, Depends(get_obo_ws)],
+):
+    """
+    Get a person's profile from the benefits360.silver.matched_people table using DBSQL.
+    """
+    try:
+        warehouse_id = "17f6d9fabd1c7633"
+        
+        # Execute SQL query using Databricks SQL warehouse
+        result = obo_ws.statement_execution.execute_statement(
+            warehouse_id=warehouse_id,
+            statement=f"""
+                SELECT 
+                    person_id,
+                    medical_id,
+                    snap_id,
+                    assistance_id,
+                    first_name,
+                    last_name,
+                    birthdate,
+                    full_name
+                FROM benefits360.silver.matched_people
+                WHERE person_id = '{person_id}'
+                LIMIT 1
+            """,
+            wait_timeout="30s"
+        )
+        
+        # Check if we have results
+        if not result.result or not result.result.data_array:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Person with ID {person_id} not found"
+            )
+        
+        # Extract the first row
+        row = result.result.data_array[0]
+        
+        # Map the result to PersonProfileOut model
+        # The row should have values in the order we selected them
+        profile_data = {}
+        
+        # Get column names from the manifest
+        if result.manifest and result.manifest.schema and result.manifest.schema.columns:
+            column_names = [col.name for col in result.manifest.schema.columns]
+            
+            # Map values to column names
+            for i, col_name in enumerate(column_names):
+                if i < len(row.values):
+                    profile_data[col_name] = row.values[i]
+        else:
+            # Fallback: use expected column order
+            column_names = [
+                "person_id", "medical_id", "snap_id", "assistance_id",
+                "first_name", "last_name", "birthdate", "full_name"
+            ]
+            for i, col_name in enumerate(column_names):
+                if i < len(row.values):
+                    profile_data[col_name] = row.values[i]
+        
+        logger.info(f"Retrieved profile for person_id: {person_id}")
+        return PersonProfileOut(**profile_data)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get person profile: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve person profile: {str(e)}"
         )
