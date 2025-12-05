@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/sidebar";
 import SidebarUserFooter from "@/components/apx/sidebar-user-footer";
 import { ModeToggle } from "@/components/apx/mode-toggle";
-import Logo from "@/components/apx/logo";
+import Logo from "@/components/apx/Logo";
 
 interface SidebarLayoutProps {
   children?: ReactNode;
