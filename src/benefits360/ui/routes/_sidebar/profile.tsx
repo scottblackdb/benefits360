@@ -85,19 +85,25 @@ function ProfileContent() {
   // Profile load mutation
   const profileMutation = useMutation({
     mutationFn: async (personId: string) => {
+      console.log("Mutation function called with personId:", personId);
       const response = await fetch(`/api/profile/${personId}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
         },
       });
+      console.log("Profile fetch response status:", response.status);
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ detail: "Unknown error" }));
+        console.error("Profile fetch failed:", errorData);
         throw new Error(errorData.detail || `Failed to load profile with status ${response.status}`);
       }
-      return response.json();
+      const data = await response.json();
+      console.log("Profile data received:", data);
+      return data;
     },
     onSuccess: (data) => {
+      console.log("Profile loaded successfully:", data);
       setSelectedProfile(data);
     },
     onError: (error) => {
@@ -190,13 +196,23 @@ function ProfileContent() {
                   const personId = result.data.person_id;
                   const isClickable = !!personId;
                   
+                  // Debug logging
+                  if (index === 0) {
+                    console.log("First search result data:", result.data);
+                    console.log("Person ID:", personId);
+                  }
+                  
                   return (
                     <Card 
                       key={index} 
                       className={`border-primary/10 ${isClickable ? "cursor-pointer hover:border-primary/30 transition-colors" : ""}`}
                       onClick={() => {
+                        console.log("Card clicked, person_id:", personId);
                         if (personId) {
+                          console.log("Fetching profile for person_id:", personId);
                           profileMutation.mutate(personId);
+                        } else {
+                          console.warn("No person_id found in result data:", result.data);
                         }
                       }}
                     >

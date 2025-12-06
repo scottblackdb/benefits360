@@ -55,8 +55,11 @@ def search_people(
         
         # The query_index API requires columns parameter
         # We need to get the index schema first to know what columns are available
-        # Initialize columns_to_fetch with default value
-        columns_to_fetch = ["full_name"]
+        # Initialize columns_to_fetch with default value including person_id
+        columns_to_fetch = [
+            "person_id", "full_name", "first_name", "last_name", 
+            "birthdate", "medical_id", "snap_id", "assistance_id"
+        ]
         
         try:
             # Try to get the index information to see available columns
@@ -64,13 +67,15 @@ def search_people(
             # Extract column names from the index schema
             if hasattr(index_info, "schema") and index_info.schema:
                 if hasattr(index_info.schema, "fields"):
-                    columns_to_fetch = [field.name for field in index_info.schema.fields if field.name]
+                    schema_columns = [field.name for field in index_info.schema.fields if field.name]
+                    # Use schema columns if available, otherwise keep default
+                    if schema_columns:
+                        columns_to_fetch = schema_columns
                 elif hasattr(index_info.schema, "columns"):
-                    columns_to_fetch = [col.name for col in index_info.schema.columns if col.name]
-            
-            # If we couldn't get columns from schema, use default
-            if not columns_to_fetch:
-                columns_to_fetch = ["full_name"]
+                    schema_columns = [col.name for col in index_info.schema.columns if col.name]
+                    # Use schema columns if available, otherwise keep default
+                    if schema_columns:
+                        columns_to_fetch = schema_columns
             
             response = vector_search_client.query_index(  # type: ignore
                 index_name=request.index_name,
@@ -79,10 +84,9 @@ def search_people(
                 num_results=request.limit or 10,
             )
         except AttributeError:
-            # If get_index doesn't exist, try querying with minimal columns
-            # or try to infer from the index name/table
+            # If get_index doesn't exist, try querying with the default columns
             try:
-                # Try with just full_name since we're searching by full name
+                # Try with all expected columns from the table
                 response = vector_search_client.query_index(  # type: ignore
                     index_name=request.index_name,
                     query_text=request.query,
