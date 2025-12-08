@@ -1,8 +1,9 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException
-from .models import VersionOut, VectorSearchRequest, VectorSearchResponse, VectorSearchResult, PersonProfileOut
+from fastapi import APIRouter, Depends, HTTPException, Query
+from .models import VersionOut, VectorSearchRequest, VectorSearchResponse, VectorSearchResult, PersonProfileOut, MedicalParticipantOut, MedicalParticipantsResponse
 from databricks.sdk import WorkspaceClient
 from databricks.sdk.service.iam import User as UserOut
+from databricks.sdk.service.sql import StatementParameterListItem
 from .dependencies import get_obo_ws
 from .config import conf
 from .logger import logger
@@ -53,65 +54,21 @@ def search_people(
         # For now, we'll use query_text but the index should be configured for vector-only search
         # In a production setup, you'd want to generate the embedding separately and use query_vector
         
-        # The query_index API requires columns parameter
-        # We need to get the index schema first to know what columns are available
-        # Initialize columns_to_fetch with default value including person_id
-        columns_to_fetch = [
-            "person_id", "full_name", "first_name", "last_name", 
-            "birthdate", "medical_id", "snap_id", "assistance_id"
-        ]
+        # Query the vector index with person_id, full_name, first_name, last_name, and birthdate
+        columns_to_fetch = ["person_id", "full_name", "first_name", "last_name", "birthdate"]
         
         try:
-            # Try to get the index information to see available columns
-            index_info = vector_search_client.get_index(index_name=request.index_name)  # type: ignore
-            # Extract column names from the index schema
-            if hasattr(index_info, "schema") and index_info.schema:
-                if hasattr(index_info.schema, "fields"):
-                    schema_columns = [field.name for field in index_info.schema.fields if field.name]
-                    # Use schema columns if available, otherwise keep default
-                    if schema_columns:
-                        columns_to_fetch = schema_columns
-                elif hasattr(index_info.schema, "columns"):
-                    schema_columns = [col.name for col in index_info.schema.columns if col.name]
-                    # Use schema columns if available, otherwise keep default
-                    if schema_columns:
-                        columns_to_fetch = schema_columns
-            
             response = vector_search_client.query_index(  # type: ignore
                 index_name=request.index_name,
                 query_text=request.query,
                 columns=columns_to_fetch,
                 num_results=request.limit or 10,
             )
-        except AttributeError:
-            # If get_index doesn't exist, try querying with the default columns
-            try:
-                # Try with all expected columns from the table
-                response = vector_search_client.query_index(  # type: ignore
-                    index_name=request.index_name,
-                    query_text=request.query,
-                    columns=columns_to_fetch,
-                    num_results=request.limit or 10,
-                )
-            except Exception as query_error:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Unable to query index. The index may not have a 'full_name' column. Please check the index schema. Error: {str(query_error)}"
-                )
-        except Exception as schema_error:
-            # If we can't get schema, try with a minimal column set
-            try:
-                response = vector_search_client.query_index(  # type: ignore
-                    index_name=request.index_name,
-                    query_text=request.query,
-                    columns=columns_to_fetch,
-                    num_results=request.limit or 10,
-                )
-            except Exception as query_error:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Unable to determine index columns. Error getting schema: {str(schema_error)}. Query error: {str(query_error)}"
-                )
+        except Exception as query_error:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unable to query vector index '{request.index_name}'. Error: {str(query_error)}"
+            )
         
         results = []
         # Store columns_to_fetch for use in data extraction
@@ -298,62 +255,174 @@ def get_person_profile(
     obo_ws: Annotated[WorkspaceClient, Depends(get_obo_ws)],
 ):
     """
-    Get a person's profile from the benefits360.silver.matched_people table using DBSQL.
+    Get a person's profile from the benefits360.silver.people_index table using DBSQL.
+    Falls back to matched_people table if not found in people_index.
     """
     try:
         warehouse_id = "17f6d9fabd1c7633"
         
-        # Execute SQL query using Databricks SQL warehouse
+        # Try people_index first
+        logger.info(f"Attempting to fetch profile for person_id: {person_id} from people_index")
         result = obo_ws.statement_execution.execute_statement(
             warehouse_id=warehouse_id,
-            statement=f"""
+            statement="""
                 SELECT 
                     person_id,
-                    medical_id,
-                    snap_id,
-                    assistance_id,
+                    full_name,
+                    birthdate,
                     first_name,
                     last_name,
-                    birthdate,
-                    full_name
-                FROM benefits360.silver.matched_people
-                WHERE person_id = '{person_id}'
+                    med_id,
+                    snap_id,
+                    case_id
+                FROM benefits360.silver.people_index
+                WHERE person_id = :person_id
                 LIMIT 1
             """,
+            parameters=[
+                StatementParameterListItem(name="person_id", value=person_id)
+            ],
             wait_timeout="30s"
         )
         
-        # Check if we have results
-        if not result.result or not result.result.data_array:
+        logger.info(f"Statement execution completed for person_id: {person_id}")
+        logger.info(f"Querying table: benefits360.silver.people_index with person_id: {person_id}")
+        
+        # Check if we have results - avoid accessing nested attributes that trigger SDK serialization
+        try:
+            # Use getattr to safely check for result
+            result_obj = getattr(result, 'result', None)
+            if result_obj is None:
+                logger.error(f"No result object returned for person_id: {person_id}")
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"No result returned for person with ID {person_id}. The person_id may not exist in benefits360.silver.people_index table."
+                )
+            
+            # Use getattr to safely check for data_array
+            data_array = getattr(result_obj, 'data_array', None)
+            used_fallback = False
+            if not data_array or len(data_array) == 0:
+                # Fallback to matched_people table
+                logger.warning(f"No data found in people_index for person_id: {person_id}, trying matched_people table")
+                result = obo_ws.statement_execution.execute_statement(
+                    warehouse_id=warehouse_id,
+                    statement="""
+                        SELECT 
+                            person_id,
+                            medical_id,
+                            snap_id,
+                            assistance_id,
+                            first_name,
+                            last_name,
+                            birthdate,
+                            full_name
+                        FROM benefits360.silver.matched_people
+                        WHERE person_id = :person_id
+                        LIMIT 1
+                    """,
+                    parameters=[
+                        StatementParameterListItem(name="person_id", value=person_id)
+                    ],
+                    wait_timeout="30s"
+                )
+                
+                result_obj = getattr(result, 'result', None)
+                if result_obj is None:
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"No result returned for person with ID {person_id} from either table"
+                    )
+                
+                data_array = getattr(result_obj, 'data_array', None)
+                if not data_array or len(data_array) == 0:
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"Person with ID {person_id} not found in people_index or matched_people tables"
+                    )
+                logger.info(f"Found person_id: {person_id} in matched_people table (fallback)")
+                used_fallback = True
+            
+            # Get the first row
+            row = data_array[0]
+            logger.info(f"Row retrieved, type: {type(row)}")
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error accessing result data: {e}", exc_info=True)
             raise HTTPException(
-                status_code=404,
-                detail=f"Person with ID {person_id} not found"
+                status_code=500,
+                detail=f"Error processing query result: {str(e)}"
             )
         
-        # Extract the first row
-        row = result.result.data_array[0]
-        
         # Map the result to PersonProfileOut model
-        # The row should have values in the order we selected them
         profile_data = {}
         
-        # Get column names from the manifest
-        if result.manifest and result.manifest.schema and result.manifest.schema.columns:
-            column_names = [col.name for col in result.manifest.schema.columns]
-            
-            # Map values to column names
-            for i, col_name in enumerate(column_names):
-                if i < len(row.values):
-                    profile_data[col_name] = row.values[i]
-        else:
-            # Fallback: use expected column order
-            column_names = [
-                "person_id", "medical_id", "snap_id", "assistance_id",
-                "first_name", "last_name", "birthdate", "full_name"
+        # Get column names - use expected order based on SELECT statement
+        # Maps database column names to model field names
+        if used_fallback:
+            # matched_people table has standard column names
+            column_mapping = [
+                ("person_id", "person_id"),
+                ("medical_id", "medical_id"),
+                ("snap_id", "snap_id"),
+                ("assistance_id", "assistance_id"),
+                ("first_name", "first_name"),
+                ("last_name", "last_name"),
+                ("birthdate", "birthdate"),
+                ("full_name", "full_name")
             ]
-            for i, col_name in enumerate(column_names):
-                if i < len(row.values):
-                    profile_data[col_name] = row.values[i]
+        else:
+            # people_index table - match SELECT order and map short names to model fields
+            column_mapping = [
+                ("person_id", "person_id"),
+                ("full_name", "full_name"),
+                ("birthdate", "birthdate"),
+                ("first_name", "first_name"),
+                ("last_name", "last_name"),
+                ("med_id", "medical_id"),      # DB: med_id -> Model: medical_id
+                ("snap_id", "snap_id"),
+                ("case_id", "assistance_id")   # DB: case_id -> Model: assistance_id
+            ]
+        
+        # Handle different row formats (dict, list, or object with values attribute)
+        try:
+            if isinstance(row, dict):
+                # Row is already a dictionary
+                logger.info("Row is a dict, using directly")
+                profile_data = row
+            elif isinstance(row, list):
+                # Row is a list - map to column names
+                logger.info(f"Row is a list with {len(row)} values, mapping to columns")
+                for i, (db_col, model_col) in enumerate(column_mapping):
+                    if i < len(row):
+                        profile_data[model_col] = row[i]
+            elif hasattr(row, 'values'):
+                # Row is an object with values attribute
+                logger.info("Row has values attribute, mapping to columns")
+                values_attr = row.values
+                # Convert to list if it's iterable
+                if hasattr(values_attr, '__iter__'):
+                    values_list = list(values_attr) if not isinstance(values_attr, list) else values_attr
+                    for i, (db_col, model_col) in enumerate(column_mapping):
+                        if i < len(values_list):
+                            profile_data[model_col] = values_list[i]
+                else:
+                    raise ValueError(f"row.values is not iterable: {type(values_attr)}")
+            elif hasattr(row, '__dict__'):
+                # Try to convert row to dict
+                logger.info("Row has __dict__, converting to dict")
+                profile_data = {k: v for k, v in row.__dict__.items() if not k.startswith('_')}
+            else:
+                logger.error(f"Unknown row format: {type(row)}")
+                raise ValueError(f"Unable to parse row data format: {type(row)}")
+        except Exception as e:
+            logger.error(f"Error parsing row data: {e}", exc_info=True)
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error parsing row data: {str(e)}"
+            )
         
         logger.info(f"Retrieved profile for person_id: {person_id}")
         return PersonProfileOut(**profile_data)
@@ -365,4 +434,82 @@ def get_person_profile(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to retrieve person profile: {str(e)}"
+        )
+
+
+@api.get("/medical-participants", response_model=MedicalParticipantsResponse, operation_id="getMedicalParticipants")
+def get_medical_participants(
+    first_name: str = Query(..., description="First name to search for"),
+    last_name: str = Query(..., description="Last name to search for"),
+    birthdate: str = Query(..., description="Birthdate to search for (YYYY-MM-DD format)"),
+    obo_ws: Annotated[WorkspaceClient, Depends(get_obo_ws)] = None,
+):
+    """
+    Get medical participants from the benefits360.bronze.medical_participants table
+    by matching first_name, last_name, and birthdate.
+    """
+    try:
+        warehouse_id = "17f6d9fabd1c7633"
+        
+        # Execute SQL query using Databricks SQL warehouse with parameterized query
+        result = obo_ws.statement_execution.execute_statement(
+            warehouse_id=warehouse_id,
+            statement="""
+                SELECT 
+                    name,
+                    gender,
+                    birthdate,
+                    language
+                FROM benefits360.bronze.medical_participants
+                WHERE first_name = :first_name
+                  AND last_name = :last_name
+                  AND birthdate = :birthdate
+            """,
+            parameters=[
+                StatementParameterListItem(name="first_name", value=first_name),
+                StatementParameterListItem(name="last_name", value=last_name),
+                StatementParameterListItem(name="birthdate", value=birthdate)
+            ],
+            wait_timeout="30s"
+        )
+        
+        participants = []
+        
+        # Check if we have results
+        if result.result and result.result.data_array:
+            # Use expected column order from SQL SELECT statement
+            column_names = ["name", "gender", "birthdate", "language"]
+            logger.info(f"Processing medical participants with expected columns")
+            
+            # Iterate over all rows
+            for row in result.result.data_array:
+                participant_data = {}
+                
+                # Handle different row formats (dict or object with values attribute)
+                if isinstance(row, dict):
+                    # Row is already a dictionary
+                    participant_data = row
+                elif hasattr(row, 'values'):
+                    # Row is an object with values attribute
+                    for i, col_name in enumerate(column_names):
+                        if i < len(row.values):
+                            participant_data[col_name] = row.values[i]
+                else:
+                    # Try to convert row to dict if it has __dict__
+                    if hasattr(row, '__dict__'):
+                        participant_data = {k: v for k, v in row.__dict__.items() if not k.startswith('_')}
+                
+                if participant_data:
+                    participants.append(MedicalParticipantOut(**participant_data))
+        
+        logger.info(f"Retrieved {len(participants)} medical participants for {first_name} {last_name}")
+        return MedicalParticipantsResponse(participants=participants)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get medical participants: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve medical participants: {str(e)}"
         )

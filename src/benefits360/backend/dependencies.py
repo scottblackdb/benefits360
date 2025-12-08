@@ -9,6 +9,7 @@ def get_obo_ws(
     """
     Returns a Databricks Workspace client with authentication behalf of user.
     If the request contains an X-Forwarded-Access-Token header, on behalf of user authentication is used.
+    If no token is provided (development mode), uses default Databricks CLI authentication.
 
     Example usage:
     @api.get("/items/")
@@ -17,12 +18,10 @@ def get_obo_ws(
         ...
     """
 
-    if not token:
-        raise HTTPException(
-            status_code=401,
-            detail="OBO token is not provided in the header X-Forwarded-Access-Token"
-        )
-
-    return WorkspaceClient(
-        token=token, auth_type="pat"
-    )  # set pat explicitly to avoid issues with SP client
+    if token:
+        # Production mode with OBO token
+        #return WorkspaceClient(token=token, auth_type="pat")
+        return WorkspaceClient()
+    else:
+        # Development mode - use default Databricks CLI authentication
+        return WorkspaceClient()

@@ -47,6 +47,25 @@ export interface HTTPValidationError {
   detail?: ValidationError[];
 }
 
+export type MedicalParticipantOutName = string | null;
+
+export type MedicalParticipantOutGender = string | null;
+
+export type MedicalParticipantOutBirthdate = string | null;
+
+export type MedicalParticipantOutLanguage = string | null;
+
+export interface MedicalParticipantOut {
+  name?: MedicalParticipantOutName;
+  gender?: MedicalParticipantOutGender;
+  birthdate?: MedicalParticipantOutBirthdate;
+  language?: MedicalParticipantOutLanguage;
+}
+
+export interface MedicalParticipantsResponse {
+  participants: MedicalParticipantOut[];
+}
+
 export type NameFamilyName = string | null;
 
 export type NameGivenName = string | null;
@@ -54,6 +73,33 @@ export type NameGivenName = string | null;
 export interface Name {
   family_name?: NameFamilyName;
   given_name?: NameGivenName;
+}
+
+export type PersonProfileOutPersonId = string | null;
+
+export type PersonProfileOutMedicalId = string | null;
+
+export type PersonProfileOutSnapId = string | null;
+
+export type PersonProfileOutAssistanceId = string | null;
+
+export type PersonProfileOutFirstName = string | null;
+
+export type PersonProfileOutLastName = string | null;
+
+export type PersonProfileOutBirthdate = string | null;
+
+export type PersonProfileOutFullName = string | null;
+
+export interface PersonProfileOut {
+  person_id?: PersonProfileOutPersonId;
+  medical_id?: PersonProfileOutMedicalId;
+  snap_id?: PersonProfileOutSnapId;
+  assistance_id?: PersonProfileOutAssistanceId;
+  first_name?: PersonProfileOutFirstName;
+  last_name?: PersonProfileOutLastName;
+  birthdate?: PersonProfileOutBirthdate;
+  full_name?: PersonProfileOutFullName;
 }
 
 export type UserActive = boolean | null;
@@ -136,6 +182,21 @@ export interface VectorSearchResult {
 export interface VersionOut {
   version: string;
 }
+
+export type GetMedicalParticipantsParams = {
+  /**
+   * First name to search for
+   */
+  first_name: string;
+  /**
+   * Last name to search for
+   */
+  last_name: string;
+  /**
+   * Birthdate to search for (YYYY-MM-DD format)
+   */
+  birthdate: string;
+};
 
 /**
  * @summary Version
@@ -722,3 +783,607 @@ export const useSearchPeople = <
 
   return useMutation(mutationOptions, queryClient);
 };
+
+/**
+ * Get a person's profile from the benefits360.silver.people_index table using DBSQL.
+Falls back to matched_people table if not found in people_index.
+ * @summary Get Person Profile
+ */
+export const getPersonProfile = (
+  personId: string,
+  options?: AxiosRequestConfig,
+): Promise<AxiosResponse<PersonProfileOut>> => {
+  return axios.default.get(`/api/profile/${personId}`, options);
+};
+
+export const getGetPersonProfileQueryKey = (personId?: string) => {
+  return [`/api/profile/${personId}`] as const;
+};
+
+export const getGetPersonProfileQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPersonProfile>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  personId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getPersonProfile>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+) => {
+  const { query: queryOptions, axios: axiosOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetPersonProfileQueryKey(personId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getPersonProfile>>
+  > = ({ signal }) => getPersonProfile(personId, { signal, ...axiosOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!personId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getPersonProfile>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetPersonProfileQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getPersonProfile>>
+>;
+export type GetPersonProfileQueryError = AxiosError<HTTPValidationError>;
+
+export function useGetPersonProfile<
+  TData = Awaited<ReturnType<typeof getPersonProfile>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  personId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getPersonProfile>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPersonProfile>>,
+          TError,
+          Awaited<ReturnType<typeof getPersonProfile>>
+        >,
+        "initialData"
+      >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetPersonProfile<
+  TData = Awaited<ReturnType<typeof getPersonProfile>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  personId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getPersonProfile>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPersonProfile>>,
+          TError,
+          Awaited<ReturnType<typeof getPersonProfile>>
+        >,
+        "initialData"
+      >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetPersonProfile<
+  TData = Awaited<ReturnType<typeof getPersonProfile>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  personId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getPersonProfile>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get Person Profile
+ */
+
+export function useGetPersonProfile<
+  TData = Awaited<ReturnType<typeof getPersonProfile>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  personId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getPersonProfile>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetPersonProfileQueryOptions(personId, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey;
+
+  return query;
+}
+
+export const getGetPersonProfileSuspenseQueryOptions = <
+  TData = Awaited<ReturnType<typeof getPersonProfile>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  personId: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getPersonProfile>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+) => {
+  const { query: queryOptions, axios: axiosOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetPersonProfileQueryKey(personId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getPersonProfile>>
+  > = ({ signal }) => getPersonProfile(personId, { signal, ...axiosOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseSuspenseQueryOptions<
+    Awaited<ReturnType<typeof getPersonProfile>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetPersonProfileSuspenseQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getPersonProfile>>
+>;
+export type GetPersonProfileSuspenseQueryError =
+  AxiosError<HTTPValidationError>;
+
+export function useGetPersonProfileSuspense<
+  TData = Awaited<ReturnType<typeof getPersonProfile>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  personId: string,
+  options: {
+    query: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getPersonProfile>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetPersonProfileSuspense<
+  TData = Awaited<ReturnType<typeof getPersonProfile>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  personId: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getPersonProfile>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetPersonProfileSuspense<
+  TData = Awaited<ReturnType<typeof getPersonProfile>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  personId: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getPersonProfile>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get Person Profile
+ */
+
+export function useGetPersonProfileSuspense<
+  TData = Awaited<ReturnType<typeof getPersonProfile>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  personId: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getPersonProfile>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetPersonProfileSuspenseQueryOptions(
+    personId,
+    options,
+  );
+
+  const query = useSuspenseQuery(
+    queryOptions,
+    queryClient,
+  ) as UseSuspenseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  query.queryKey = queryOptions.queryKey;
+
+  return query;
+}
+
+/**
+ * Get medical participants from the benefits360.bronze.medical_participants table
+by matching first_name, last_name, and birthdate.
+ * @summary Get Medical Participants
+ */
+export const getMedicalParticipants = (
+  params: GetMedicalParticipantsParams,
+  options?: AxiosRequestConfig,
+): Promise<AxiosResponse<MedicalParticipantsResponse>> => {
+  return axios.default.get(`/api/medical-participants`, {
+    ...options,
+    params: { ...params, ...options?.params },
+  });
+};
+
+export const getGetMedicalParticipantsQueryKey = (
+  params?: GetMedicalParticipantsParams,
+) => {
+  return [`/api/medical-participants`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetMedicalParticipantsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getMedicalParticipants>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  params: GetMedicalParticipantsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getMedicalParticipants>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+) => {
+  const { query: queryOptions, axios: axiosOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetMedicalParticipantsQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getMedicalParticipants>>
+  > = ({ signal }) =>
+    getMedicalParticipants(params, { signal, ...axiosOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getMedicalParticipants>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetMedicalParticipantsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getMedicalParticipants>>
+>;
+export type GetMedicalParticipantsQueryError = AxiosError<HTTPValidationError>;
+
+export function useGetMedicalParticipants<
+  TData = Awaited<ReturnType<typeof getMedicalParticipants>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  params: GetMedicalParticipantsParams,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getMedicalParticipants>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMedicalParticipants>>,
+          TError,
+          Awaited<ReturnType<typeof getMedicalParticipants>>
+        >,
+        "initialData"
+      >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetMedicalParticipants<
+  TData = Awaited<ReturnType<typeof getMedicalParticipants>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  params: GetMedicalParticipantsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getMedicalParticipants>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMedicalParticipants>>,
+          TError,
+          Awaited<ReturnType<typeof getMedicalParticipants>>
+        >,
+        "initialData"
+      >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetMedicalParticipants<
+  TData = Awaited<ReturnType<typeof getMedicalParticipants>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  params: GetMedicalParticipantsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getMedicalParticipants>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get Medical Participants
+ */
+
+export function useGetMedicalParticipants<
+  TData = Awaited<ReturnType<typeof getMedicalParticipants>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  params: GetMedicalParticipantsParams,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getMedicalParticipants>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetMedicalParticipantsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey;
+
+  return query;
+}
+
+export const getGetMedicalParticipantsSuspenseQueryOptions = <
+  TData = Awaited<ReturnType<typeof getMedicalParticipants>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  params: GetMedicalParticipantsParams,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getMedicalParticipants>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+) => {
+  const { query: queryOptions, axios: axiosOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetMedicalParticipantsQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getMedicalParticipants>>
+  > = ({ signal }) =>
+    getMedicalParticipants(params, { signal, ...axiosOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseSuspenseQueryOptions<
+    Awaited<ReturnType<typeof getMedicalParticipants>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetMedicalParticipantsSuspenseQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getMedicalParticipants>>
+>;
+export type GetMedicalParticipantsSuspenseQueryError =
+  AxiosError<HTTPValidationError>;
+
+export function useGetMedicalParticipantsSuspense<
+  TData = Awaited<ReturnType<typeof getMedicalParticipants>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  params: GetMedicalParticipantsParams,
+  options: {
+    query: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getMedicalParticipants>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetMedicalParticipantsSuspense<
+  TData = Awaited<ReturnType<typeof getMedicalParticipants>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  params: GetMedicalParticipantsParams,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getMedicalParticipants>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetMedicalParticipantsSuspense<
+  TData = Awaited<ReturnType<typeof getMedicalParticipants>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  params: GetMedicalParticipantsParams,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getMedicalParticipants>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get Medical Participants
+ */
+
+export function useGetMedicalParticipantsSuspense<
+  TData = Awaited<ReturnType<typeof getMedicalParticipants>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  params: GetMedicalParticipantsParams,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getMedicalParticipants>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetMedicalParticipantsSuspenseQueryOptions(
+    params,
+    options,
+  );
+
+  const query = useSuspenseQuery(
+    queryOptions,
+    queryClient,
+  ) as UseSuspenseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  query.queryKey = queryOptions.queryKey;
+
+  return query;
+}

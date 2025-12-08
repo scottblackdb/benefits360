@@ -15,7 +15,7 @@ class VersionOut(BaseModel):
 class VectorSearchRequest(BaseModel):
     query: str
     endpoint_name: str = "lewis"
-    index_name: str = "benefits360.silver.matched_people_vec"
+    index_name: str = "benefits360.silver.people_index_vec"
     limit: Optional[int] = 10
 
 
@@ -38,3 +38,14 @@ class PersonProfileOut(BaseModel):
     last_name: Optional[str] = None
     birthdate: Optional[date] = None
     full_name: Optional[str] = None
+
+
+class MedicalParticipantOut(BaseModel):
+    name: Optional[str] = None
+    gender: Optional[str] = None
+    birthdate: Optional[date] = None
+    language: Optional[str] = None
+
+
+class MedicalParticipantsResponse(BaseModel):
+    participants: List[MedicalParticipantOut]

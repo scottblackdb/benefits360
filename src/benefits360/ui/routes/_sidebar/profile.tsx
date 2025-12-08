@@ -44,11 +44,21 @@ interface PersonProfile {
   full_name?: string;
 }
 
+interface MedicalParticipant {
+  name?: string;
+  gender?: string;
+  birthdate?: string;
+  language?: string;
+}
+
 function ProfileContent() {
   const { data: user } = useCurrentUserSuspense(selector());
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [selectedProfile, setSelectedProfile] = useState<PersonProfile | null>(null);
+  const [medicalParticipants, setMedicalParticipants] = useState<MedicalParticipant[]>([]);
+  const [searchBoxOpen, setSearchBoxOpen] = useState(true);
+  const [showSearchResults, setShowSearchResults] = useState(true);
 
   // Search mutation
   const searchMutation = useMutation({
@@ -61,7 +71,7 @@ function ProfileContent() {
         body: JSON.stringify({
           query,
           endpoint_name: "lewis",
-          index_name: "benefits360.silver.matched_people_vec",
+          index_name: "benefits360.silver.people_index_vec",
           limit: 10,
         }),
       });
@@ -74,6 +84,7 @@ function ProfileContent() {
     onSuccess: (data) => {
       setSearchResults(data.results || []);
       setSelectedProfile(null); // Clear selected profile when new search is performed
+      setShowSearchResults(true); // Show search results when new search is performed
     },
     onError: (error) => {
       console.error("Search error:", error);
@@ -105,10 +116,61 @@ function ProfileContent() {
     onSuccess: (data) => {
       console.log("Profile loaded successfully:", data);
       setSelectedProfile(data);
+      setSearchBoxOpen(false); // Close search box after selection
+      setShowSearchResults(false); // Hide search results after selection
+      
+      // Fetch medical participants using data from the loaded profile
+      const firstName = data.first_name;
+      const lastName = data.last_name;
+      const birthdate = data.birthdate;
+      
+      if (firstName && lastName && birthdate) {
+        console.log("Fetching medical participants for:", { firstName, lastName, birthdate });
+        medicalParticipantsMutation.mutate({
+          first_name: firstName,
+          last_name: lastName,
+          birthdate: birthdate,
+        });
+      }
     },
     onError: (error) => {
       console.error("Profile load error:", error);
       setSelectedProfile(null);
+    },
+  });
+
+  // Medical participants mutation
+  const medicalParticipantsMutation = useMutation({
+    mutationFn: async (params: { first_name: string; last_name: string; birthdate: string }) => {
+      console.log("Fetching medical participants with params:", params);
+      const queryParams = new URLSearchParams({
+        first_name: params.first_name,
+        last_name: params.last_name,
+        birthdate: params.birthdate,
+      });
+      const response = await fetch(`/api/medical-participants?${queryParams}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      console.log("Medical participants fetch response status:", response.status);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ detail: "Unknown error" }));
+        console.error("Medical participants fetch failed:", errorData);
+        throw new Error(errorData.detail || `Failed to load medical participants with status ${response.status}`);
+      }
+      const data = await response.json();
+      console.log("Medical participants data received:", data);
+      return data;
+    },
+    onSuccess: (data) => {
+      console.log("Medical participants loaded successfully:", data);
+      setMedicalParticipants(data.participants || []);
+    },
+    onError: (error) => {
+      console.error("Medical participants load error:", error);
+      setMedicalParticipants([]);
     },
   });
 
@@ -145,7 +207,8 @@ function ProfileContent() {
   return (
     <div className="space-y-6">
       {/* Search Box */}
-      <Card className="border-primary/20">
+      {searchBoxOpen && (
+        <Card className="border-primary/20">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Search className="h-5 w-5" />
@@ -186,7 +249,7 @@ function ProfileContent() {
           </form>
 
           {/* Search Results */}
-          {searchResults.length > 0 && (
+          {showSearchResults && searchResults.length > 0 && (
             <div className="mt-4 space-y-2">
               <h3 className="text-sm font-semibold">
                 Results ({searchResults.length})
@@ -211,6 +274,7 @@ function ProfileContent() {
                         if (personId) {
                           console.log("Fetching profile for person_id:", personId);
                           profileMutation.mutate(personId);
+                          // Medical participants will be fetched after profile loads
                         } else {
                           console.warn("No person_id found in result data:", result.data);
                         }
@@ -219,25 +283,20 @@ function ProfileContent() {
                       <CardContent className="pt-4">
                         <div className="space-y-2">
                           {result.data.full_name && (
-                            <p className="font-semibold">
+                            <p className="font-semibold text-lg">
                               {result.data.full_name}
+                            </p>
+                          )}
+                          {result.data.birthdate && (
+                            <p className="text-sm text-muted-foreground">
+                              Birth Date: {result.data.birthdate}
                             </p>
                           )}
                           {result.score !== null && result.score !== undefined && (
                             <p className="text-xs text-muted-foreground">
-                              Score: {result.score.toFixed(4)}
+                              Match Score: {result.score.toFixed(4)}
                             </p>
                           )}
-                          {Object.entries(result.data)
-                            .filter(([key]) => key !== "full_name" && key !== "score")
-                            .map(([key, value]) => (
-                              <div key={key} className="text-sm">
-                                <span className="font-medium">{key}:</span>{" "}
-                                <span className="text-muted-foreground">
-                                  {String(value)}
-                                </span>
-                              </div>
-                            ))}
                           {isClickable && (
                             <p className="text-xs text-primary mt-2">
                               Click to view full profile →
@@ -275,6 +334,79 @@ function ProfileContent() {
           )}
         </CardContent>
       </Card>
+      )}
+
+      {/* Medical Participants Profile Overview */}
+      {medicalParticipants.length > 0 && (
+        <Card className="border-primary/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Medical Profile Overview
+            </CardTitle>
+            <CardDescription>
+              Medical participant information from benefits360.bronze.medical_participants
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {medicalParticipants.map((participant, index) => (
+              <div key={index} className={`space-y-3 ${index > 0 ? "pt-4 border-t" : ""}`}>
+                {participant.name && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Name</p>
+                    <p className="text-lg font-semibold">{participant.name}</p>
+                  </div>
+                )}
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {participant.gender && (
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Gender</p>
+                      <p className="text-base">{participant.gender}</p>
+                    </div>
+                  )}
+
+                  {participant.birthdate && (
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Birth Date</p>
+                      <p className="text-base">{participant.birthdate}</p>
+                    </div>
+                  )}
+
+                  {participant.language && (
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Language</p>
+                      <p className="text-base">{participant.language}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            {medicalParticipantsMutation.isPending && (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-sm">Loading medical participants...</span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {medicalParticipantsMutation.isError && (
+        <Card className="border-destructive/20">
+          <CardContent className="pt-6">
+            <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20">
+              <p className="text-sm font-medium text-destructive">Failed to load medical participants</p>
+              <p className="text-xs text-destructive/80 mt-1">
+                {medicalParticipantsMutation.error instanceof Error
+                  ? medicalParticipantsMutation.error.message
+                  : "An error occurred while loading medical participants."}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Selected Profile Display */}
       {selectedProfile && (
