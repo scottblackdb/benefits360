@@ -1,6 +1,8 @@
+import type { AxiosResponse } from "axios";
+
 export const selector = <T>() => ({
   query: {
-    select: (data: T) => data,
+    select: (response: AxiosResponse<T>) => response.data,
   },
 });
 

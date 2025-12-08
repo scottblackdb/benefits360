@@ -25,24 +25,27 @@ type BubbleBackgroundProps = React.ComponentProps<"div"> & {
   colors?: BubbleColors;
 };
 
-function BubbleBackground({
-  ref,
-  className,
-  children,
-  interactive = false,
-  transition = { stiffness: 100, damping: 20 },
-  colors = {
-    first: "18,113,255",
-    second: "221,74,255",
-    third: "0,220,255",
-    fourth: "200,50,50",
-    fifth: "180,180,50",
-    sixth: "140,100,255",
-  },
-  ...props
-}: BubbleBackgroundProps) {
-  const containerRef = React.useRef<HTMLDivElement>(null);
-  React.useImperativeHandle(ref, () => containerRef.current as HTMLDivElement);
+const BubbleBackground = React.forwardRef<HTMLDivElement, BubbleBackgroundProps>(
+  function BubbleBackground(
+    {
+      className,
+      children,
+      interactive = false,
+      transition = { stiffness: 100, damping: 20 },
+      colors = {
+        first: "18,113,255",
+        second: "221,74,255",
+        third: "0,220,255",
+        fourth: "200,50,50",
+        fifth: "180,180,50",
+        sixth: "140,100,255",
+      },
+      ...props
+    },
+    ref
+  ) {
+    const containerRef = React.useRef<HTMLDivElement>(null);
+    React.useImperativeHandle(ref, () => containerRef.current as HTMLDivElement);
 
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
@@ -214,6 +217,6 @@ function BubbleBackground({
       {children}
     </div>
   );
-}
+});
 
 export { BubbleBackground, type BubbleBackgroundProps };

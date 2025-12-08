@@ -43,7 +43,7 @@ class PersonProfileOut(BaseModel):
 class MedicalParticipantOut(BaseModel):
     name: Optional[str] = None
     gender: Optional[str] = None
-    birthdate: Optional[date] = None
+    birthdate: Optional[str] = None
     language: Optional[str] = None
 
 
