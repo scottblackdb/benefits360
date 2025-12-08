@@ -49,3 +49,53 @@ class MedicalParticipantOut(BaseModel):
 
 class MedicalParticipantsResponse(BaseModel):
     participants: List[MedicalParticipantOut]
+
+
+class TimelineEventOut(BaseModel):
+    # Assistance fields
+    a_application_date: Optional[str] = None
+    assistance_type: Optional[str] = None
+    a_application_status: Optional[str] = None
+    a_decision_date: Optional[str] = None
+    # Medical fields
+    m_application_date: Optional[str] = None
+    m_application_state: Optional[str] = None
+    m_decision_date: Optional[str] = None
+    # SNAP fields
+    snap_application_date: Optional[str] = None
+    s_application_state: Optional[str] = None
+    snap_decision_date: Optional[str] = None
+
+
+class TimelineResponse(BaseModel):
+    events: List[TimelineEventOut]
+
+
+class SnapParticipantDetailOut(BaseModel):
+    snap_id: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    birthdate: Optional[str] = None
+    age: Optional[int] = None
+    gender: Optional[str] = None
+    race: Optional[str] = None
+    ethnicity: Optional[str] = None
+    is_disabled: Optional[bool] = None
+    language: Optional[str] = None
+    household_size: Optional[int] = None
+    household_type: Optional[str] = None
+    monthly_income: Optional[float] = None
+    income_source: Optional[str] = None
+    estimated_assets: Optional[float] = None
+    income_limit: Optional[float] = None
+    asset_limit: Optional[float] = None
+    income_eligible: Optional[bool] = None
+    asset_eligible: Optional[bool] = None
+    work_requirement_exempt: Optional[bool] = None
+    overall_eligible: Optional[bool] = None
+    max_benefit: Optional[float] = None
+    monthly_snap_benefit: Optional[float] = None
+    annual_snap_benefit: Optional[float] = None
+    snap_application_date: Optional[str] = None
+    snap_decision_date: Optional[str] = None
+    application_status: Optional[str] = None

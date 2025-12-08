@@ -50,11 +50,25 @@ interface SearchResult {
   score?: number;
 }
 
+interface TimelineEvent {
+  a_application_date?: string;
+  assistance_type?: string;
+  a_application_status?: string;
+  a_decision_date?: string;
+  m_application_date?: string;
+  m_application_state?: string;
+  m_decision_date?: string;
+  snap_application_date?: string;
+  s_application_state?: string;
+  snap_decision_date?: string;
+}
+
 function ProfileContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [selectedProfile, setSelectedProfile] = useState<PersonProfile | null>(null);
   const [medicalParticipants, setMedicalParticipants] = useState<MedicalParticipant[]>([]);
+  const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
 
   // Search mutation
@@ -80,12 +94,14 @@ function ProfileContent() {
       setSearchResults(data.results || []);
       setSelectedProfile(null);
       setMedicalParticipants([]);
+      setTimelineEvents([]);
       setShowSearchResults(true);
     },
     onError: () => {
       setSearchResults([]);
       setSelectedProfile(null);
       setMedicalParticipants([]);
+      setTimelineEvents([]);
     },
   });
 
@@ -114,10 +130,16 @@ function ProfileContent() {
           birthdate: data.birthdate,
         });
       }
+      
+      // Fetch timeline data if we have person_id
+      if (data.person_id) {
+        timelineMutation.mutate(data.person_id);
+      }
     },
     onError: () => {
       setSelectedProfile(null);
       setMedicalParticipants([]);
+      setTimelineEvents([]);
     },
   });
 
@@ -140,6 +162,27 @@ function ProfileContent() {
     },
     onError: () => {
       setMedicalParticipants([]);
+    },
+  });
+
+  // Timeline mutation
+  const timelineMutation = useMutation({
+    mutationFn: async (personId: string) => {
+      const response = await fetch(`/api/timeline/${personId}`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ detail: "Unknown error" }));
+        throw new Error(errorData.detail || `Failed to load timeline`);
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      setTimelineEvents(data.events || []);
+    },
+    onError: () => {
+      setTimelineEvents([]);
     },
   });
 
@@ -445,6 +488,190 @@ function ProfileContent() {
                   <p className="text-sm font-mono">{selectedProfile.assistance_id}</p>
                 </div>
               )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Timeline Loading */}
+      {timelineMutation.isPending && (
+        <Card className="border-primary/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span className="text-sm">Loading timeline...</span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Timeline Display */}
+      {timelineEvents.length > 0 && (() => {
+        // Parse and flatten all timeline events into individual chronological events
+        const chronologicalEvents: Array<{
+          date: Date;
+          dateStr: string;
+          program: string;
+          eventType: string;
+          details: Record<string, string>;
+          color: string;
+        }> = [];
+
+        timelineEvents.forEach((event) => {
+          // Assistance Application
+          if (event.a_application_date) {
+            chronologicalEvents.push({
+              date: new Date(event.a_application_date),
+              dateStr: event.a_application_date,
+              program: "Assistance",
+              eventType: "Application Submitted",
+              details: {
+                ...(event.assistance_type && { "Assistance Type": event.assistance_type }),
+                ...(event.a_application_status && { "Status": event.a_application_status }),
+              },
+              color: "bg-blue-500",
+            });
+          }
+          
+          // Assistance Decision
+          if (event.a_decision_date) {
+            chronologicalEvents.push({
+              date: new Date(event.a_decision_date),
+              dateStr: event.a_decision_date,
+              program: "Assistance",
+              eventType: "Decision Made",
+              details: {
+                ...(event.assistance_type && { "Assistance Type": event.assistance_type }),
+                ...(event.a_application_status && { "Status": event.a_application_status }),
+              },
+              color: "bg-blue-500",
+            });
+          }
+
+          // Medical Application
+          if (event.m_application_date) {
+            chronologicalEvents.push({
+              date: new Date(event.m_application_date),
+              dateStr: event.m_application_date,
+              program: "Medical",
+              eventType: "Application Submitted",
+              details: {
+                ...(event.m_application_state && { "Status": event.m_application_state }),
+              },
+              color: "bg-green-500",
+            });
+          }
+
+          // Medical Decision
+          if (event.m_decision_date) {
+            chronologicalEvents.push({
+              date: new Date(event.m_decision_date),
+              dateStr: event.m_decision_date,
+              program: "Medical",
+              eventType: "Decision Made",
+              details: {
+                ...(event.m_application_state && { "Status": event.m_application_state }),
+              },
+              color: "bg-green-500",
+            });
+          }
+
+          // SNAP Application
+          if (event.snap_application_date) {
+            chronologicalEvents.push({
+              date: new Date(event.snap_application_date),
+              dateStr: event.snap_application_date,
+              program: "SNAP",
+              eventType: "Application Submitted",
+              details: {
+                ...(event.s_application_state && { "Status": event.s_application_state }),
+              },
+              color: "bg-orange-500",
+            });
+          }
+
+          // SNAP Decision
+          if (event.snap_decision_date) {
+            chronologicalEvents.push({
+              date: new Date(event.snap_decision_date),
+              dateStr: event.snap_decision_date,
+              program: "SNAP",
+              eventType: "Decision Made",
+              details: {
+                ...(event.s_application_state && { "Status": event.s_application_state }),
+              },
+              color: "bg-orange-500",
+            });
+          }
+        });
+
+        // Sort events chronologically (oldest to newest)
+        chronologicalEvents.sort((a, b) => a.date.getTime() - b.date.getTime());
+
+        return (
+          <Card className="border-primary/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                Timeline
+              </CardTitle>
+              <CardDescription>
+                Application and decision history across all programs in chronological order
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="relative">
+                {/* Vertical line */}
+                <div className="absolute left-[7px] top-0 bottom-0 w-[2px] bg-border" />
+                
+                {/* Timeline events */}
+                <div className="space-y-6">
+                  {chronologicalEvents.map((event, index) => (
+                    <div key={index} className="relative pl-8">
+                      {/* Dot marker */}
+                      <div className={`absolute left-0 top-1 w-4 h-4 rounded-full ${event.color} border-4 border-background`} />
+                      
+                      {/* Event content */}
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-semibold">{event.dateStr}</span>
+                          <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">
+                            {event.program}
+                          </span>
+                        </div>
+                        <p className="text-base font-medium">{event.eventType}</p>
+                        
+                        {/* Event details */}
+                        {Object.keys(event.details).length > 0 && (
+                          <div className="mt-2 space-y-1">
+                            {Object.entries(event.details).map(([key, value]) => (
+                              <div key={key} className="text-sm">
+                                <span className="text-muted-foreground">{key}:</span>{" "}
+                                <span>{value}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })()}
+
+      {/* Timeline Error */}
+      {timelineMutation.isError && (
+        <Card className="border-destructive/20">
+          <CardContent className="pt-6">
+            <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20">
+              <p className="text-sm font-medium text-destructive">Failed to load timeline</p>
+              <p className="text-xs text-destructive/80 mt-1">
+                {timelineMutation.error instanceof Error
+                  ? timelineMutation.error.message
+                  : "An error occurred while loading timeline data."}
+              </p>
             </div>
           </CardContent>
         </Card>

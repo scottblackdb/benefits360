@@ -1,6 +1,6 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query
-from .models import VersionOut, VectorSearchRequest, VectorSearchResponse, VectorSearchResult, PersonProfileOut, MedicalParticipantOut, MedicalParticipantsResponse
+from .models import VersionOut, VectorSearchRequest, VectorSearchResponse, VectorSearchResult, PersonProfileOut, MedicalParticipantOut, MedicalParticipantsResponse, TimelineEventOut, TimelineResponse
 from databricks.sdk import WorkspaceClient
 from databricks.sdk.service.iam import User as UserOut
 from databricks.sdk.service.sql import StatementParameterListItem
@@ -246,4 +246,82 @@ def get_medical_participants(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to retrieve medical participants: {str(e)}"
+        )
+
+
+@api.get("/timeline/{person_id}", response_model=TimelineResponse, operation_id="getTimeline")
+def get_timeline(
+    person_id: str,
+    obo_ws: Annotated[WorkspaceClient, Depends(get_obo_ws)],
+):
+    """
+    Get timeline events for a person by joining assistance, medical, and SNAP data.
+    """
+    try:
+        warehouse_id = "17f6d9fabd1c7633"
+        
+        logger.info(f"Fetching timeline for person_id: {person_id}")
+        
+        # Execute SQL query using Databricks SQL warehouse with parameterized query
+        result = obo_ws.statement_execution.execute_statement(
+            warehouse_id=warehouse_id,
+            statement="""
+                SELECT 
+                    a.application_date as a_application_date,
+                    a.assistance_type,
+                    a.application_status as a_application_status,
+                    a.decision_date as a_decision_date,
+                    m.application_date as m_application_date,
+                    m.application_status as m_application_state,
+                    m.decision_date as m_decision_date,
+                    s.snap_application_date,
+                    s.application_status as s_application_state,
+                    s.snap_decision_date
+                FROM benefits360.silver.people_index p
+                LEFT JOIN benefits360.bronze.assistance_applications a
+                    ON p.case_id = a.case_id
+                LEFT JOIN benefits360.bronze.medical_participants m 
+                    ON p.med_id = m.case_id
+                LEFT JOIN benefits360.bronze.snap_participants s
+                    ON p.snap_id = s.snap_id
+                WHERE p.person_id = :person_id
+            """,
+            parameters=[
+                StatementParameterListItem(name="person_id", value=person_id)
+            ],
+            wait_timeout="30s"
+        )
+        
+        events = []
+        column_names = [
+            "a_application_date", "assistance_type", "a_application_status", "a_decision_date",
+            "m_application_date", "m_application_state", "m_decision_date",
+            "snap_application_date", "s_application_state", "snap_decision_date"
+        ]
+        
+        data_array = getattr(getattr(result, 'result', None), 'data_array', None)
+        
+        if data_array:
+            for row in data_array:
+                event_data = {}
+                if isinstance(row, dict):
+                    event_data = {col: row.get(col) for col in column_names}
+                elif isinstance(row, list):
+                    event_data = {column_names[i]: row[i] for i in range(min(len(row), len(column_names)))}
+                elif hasattr(row, '__dict__'):
+                    event_data = {col: getattr(row, col, None) for col in column_names}
+                
+                if event_data:
+                    events.append(TimelineEventOut(**event_data))
+        
+        logger.info(f"Found {len(events)} timeline events for person_id: {person_id}")
+        return TimelineResponse(events=events)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get timeline for person_id {person_id}: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve timeline: {str(e)}"
         )

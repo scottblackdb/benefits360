@@ -102,6 +102,43 @@ export interface PersonProfileOut {
   full_name?: PersonProfileOutFullName;
 }
 
+export type TimelineEventOutAApplicationDate = string | null;
+
+export type TimelineEventOutAssistanceType = string | null;
+
+export type TimelineEventOutAApplicationStatus = string | null;
+
+export type TimelineEventOutADecisionDate = string | null;
+
+export type TimelineEventOutMApplicationDate = string | null;
+
+export type TimelineEventOutMApplicationState = string | null;
+
+export type TimelineEventOutMDecisionDate = string | null;
+
+export type TimelineEventOutSnapApplicationDate = string | null;
+
+export type TimelineEventOutSApplicationState = string | null;
+
+export type TimelineEventOutSnapDecisionDate = string | null;
+
+export interface TimelineEventOut {
+  a_application_date?: TimelineEventOutAApplicationDate;
+  assistance_type?: TimelineEventOutAssistanceType;
+  a_application_status?: TimelineEventOutAApplicationStatus;
+  a_decision_date?: TimelineEventOutADecisionDate;
+  m_application_date?: TimelineEventOutMApplicationDate;
+  m_application_state?: TimelineEventOutMApplicationState;
+  m_decision_date?: TimelineEventOutMDecisionDate;
+  snap_application_date?: TimelineEventOutSnapApplicationDate;
+  s_application_state?: TimelineEventOutSApplicationState;
+  snap_decision_date?: TimelineEventOutSnapDecisionDate;
+}
+
+export interface TimelineResponse {
+  events: TimelineEventOut[];
+}
+
 export type UserActive = boolean | null;
 
 export type UserDisplayName = string | null;
@@ -1375,6 +1412,280 @@ export function useGetMedicalParticipantsSuspense<
     params,
     options,
   );
+
+  const query = useSuspenseQuery(
+    queryOptions,
+    queryClient,
+  ) as UseSuspenseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  query.queryKey = queryOptions.queryKey;
+
+  return query;
+}
+
+/**
+ * Get timeline events for a person by joining assistance, medical, and SNAP data.
+ * @summary Get Timeline
+ */
+export const getTimeline = (
+  personId: string,
+  options?: AxiosRequestConfig,
+): Promise<AxiosResponse<TimelineResponse>> => {
+  return axios.default.get(`/api/timeline/${personId}`, options);
+};
+
+export const getGetTimelineQueryKey = (personId?: string) => {
+  return [`/api/timeline/${personId}`] as const;
+};
+
+export const getGetTimelineQueryOptions = <
+  TData = Awaited<ReturnType<typeof getTimeline>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  personId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getTimeline>>, TError, TData>
+    >;
+    axios?: AxiosRequestConfig;
+  },
+) => {
+  const { query: queryOptions, axios: axiosOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetTimelineQueryKey(personId);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getTimeline>>> = ({
+    signal,
+  }) => getTimeline(personId, { signal, ...axiosOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!personId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getTimeline>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetTimelineQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getTimeline>>
+>;
+export type GetTimelineQueryError = AxiosError<HTTPValidationError>;
+
+export function useGetTimeline<
+  TData = Awaited<ReturnType<typeof getTimeline>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  personId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getTimeline>>, TError, TData>
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getTimeline>>,
+          TError,
+          Awaited<ReturnType<typeof getTimeline>>
+        >,
+        "initialData"
+      >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetTimeline<
+  TData = Awaited<ReturnType<typeof getTimeline>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  personId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getTimeline>>, TError, TData>
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getTimeline>>,
+          TError,
+          Awaited<ReturnType<typeof getTimeline>>
+        >,
+        "initialData"
+      >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetTimeline<
+  TData = Awaited<ReturnType<typeof getTimeline>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  personId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getTimeline>>, TError, TData>
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get Timeline
+ */
+
+export function useGetTimeline<
+  TData = Awaited<ReturnType<typeof getTimeline>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  personId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<Awaited<ReturnType<typeof getTimeline>>, TError, TData>
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetTimelineQueryOptions(personId, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey;
+
+  return query;
+}
+
+export const getGetTimelineSuspenseQueryOptions = <
+  TData = Awaited<ReturnType<typeof getTimeline>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  personId: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getTimeline>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+) => {
+  const { query: queryOptions, axios: axiosOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetTimelineQueryKey(personId);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getTimeline>>> = ({
+    signal,
+  }) => getTimeline(personId, { signal, ...axiosOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseSuspenseQueryOptions<
+    Awaited<ReturnType<typeof getTimeline>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetTimelineSuspenseQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getTimeline>>
+>;
+export type GetTimelineSuspenseQueryError = AxiosError<HTTPValidationError>;
+
+export function useGetTimelineSuspense<
+  TData = Awaited<ReturnType<typeof getTimeline>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  personId: string,
+  options: {
+    query: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getTimeline>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetTimelineSuspense<
+  TData = Awaited<ReturnType<typeof getTimeline>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  personId: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getTimeline>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetTimelineSuspense<
+  TData = Awaited<ReturnType<typeof getTimeline>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  personId: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getTimeline>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get Timeline
+ */
+
+export function useGetTimelineSuspense<
+  TData = Awaited<ReturnType<typeof getTimeline>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  personId: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getTimeline>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetTimelineSuspenseQueryOptions(personId, options);
 
   const query = useSuspenseQuery(
     queryOptions,
