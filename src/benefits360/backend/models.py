@@ -99,3 +99,37 @@ class SnapParticipantDetailOut(BaseModel):
     snap_application_date: Optional[str] = None
     snap_decision_date: Optional[str] = None
     application_status: Optional[str] = None
+
+
+class MedicalParticipantDetailOut(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    case_id: Optional[str] = None
+    birthdate: Optional[str] = None
+    age: Optional[int] = None
+    gender: Optional[str] = None
+    race: Optional[str] = None
+    ethnicity: Optional[str] = None
+    is_disabled: Optional[bool] = None
+    language: Optional[str] = None
+    household_size: Optional[int] = None
+    household_type: Optional[str] = None
+    monthly_income: Optional[float] = None
+    annual_income: Optional[float] = None
+    income_source: Optional[str] = None
+    employment_status: Optional[str] = None
+    estimated_assets: Optional[float] = None
+    fpl_percentage: Optional[float] = None
+    income_eligible: Optional[bool] = None
+    asset_eligible: Optional[bool] = None
+    citizenship_status: Optional[str] = None
+    residency_eligible: Optional[bool] = None
+    overall_eligible: Optional[bool] = None
+    coverage_category: Optional[str] = None
+    premium_amount: Optional[float] = None
+    copay_amount: Optional[float] = None
+    application_date: Optional[str] = None
+    decision_date: Optional[str] = None
+    application_status: Optional[str] = None
+    enrollment_date: Optional[str] = None
+    county: Optional[str] = None

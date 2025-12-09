@@ -47,6 +47,102 @@ export interface HTTPValidationError {
   detail?: ValidationError[];
 }
 
+export type MedicalParticipantDetailOutFirstName = string | null;
+
+export type MedicalParticipantDetailOutLastName = string | null;
+
+export type MedicalParticipantDetailOutCaseId = string | null;
+
+export type MedicalParticipantDetailOutBirthdate = string | null;
+
+export type MedicalParticipantDetailOutAge = number | null;
+
+export type MedicalParticipantDetailOutGender = string | null;
+
+export type MedicalParticipantDetailOutRace = string | null;
+
+export type MedicalParticipantDetailOutEthnicity = string | null;
+
+export type MedicalParticipantDetailOutIsDisabled = boolean | null;
+
+export type MedicalParticipantDetailOutLanguage = string | null;
+
+export type MedicalParticipantDetailOutHouseholdSize = number | null;
+
+export type MedicalParticipantDetailOutHouseholdType = string | null;
+
+export type MedicalParticipantDetailOutMonthlyIncome = number | null;
+
+export type MedicalParticipantDetailOutAnnualIncome = number | null;
+
+export type MedicalParticipantDetailOutIncomeSource = string | null;
+
+export type MedicalParticipantDetailOutEmploymentStatus = string | null;
+
+export type MedicalParticipantDetailOutEstimatedAssets = number | null;
+
+export type MedicalParticipantDetailOutFplPercentage = number | null;
+
+export type MedicalParticipantDetailOutIncomeEligible = boolean | null;
+
+export type MedicalParticipantDetailOutAssetEligible = boolean | null;
+
+export type MedicalParticipantDetailOutCitizenshipStatus = string | null;
+
+export type MedicalParticipantDetailOutResidencyEligible = boolean | null;
+
+export type MedicalParticipantDetailOutOverallEligible = boolean | null;
+
+export type MedicalParticipantDetailOutCoverageCategory = string | null;
+
+export type MedicalParticipantDetailOutPremiumAmount = number | null;
+
+export type MedicalParticipantDetailOutCopayAmount = number | null;
+
+export type MedicalParticipantDetailOutApplicationDate = string | null;
+
+export type MedicalParticipantDetailOutDecisionDate = string | null;
+
+export type MedicalParticipantDetailOutApplicationStatus = string | null;
+
+export type MedicalParticipantDetailOutEnrollmentDate = string | null;
+
+export type MedicalParticipantDetailOutCounty = string | null;
+
+export interface MedicalParticipantDetailOut {
+  first_name?: MedicalParticipantDetailOutFirstName;
+  last_name?: MedicalParticipantDetailOutLastName;
+  case_id?: MedicalParticipantDetailOutCaseId;
+  birthdate?: MedicalParticipantDetailOutBirthdate;
+  age?: MedicalParticipantDetailOutAge;
+  gender?: MedicalParticipantDetailOutGender;
+  race?: MedicalParticipantDetailOutRace;
+  ethnicity?: MedicalParticipantDetailOutEthnicity;
+  is_disabled?: MedicalParticipantDetailOutIsDisabled;
+  language?: MedicalParticipantDetailOutLanguage;
+  household_size?: MedicalParticipantDetailOutHouseholdSize;
+  household_type?: MedicalParticipantDetailOutHouseholdType;
+  monthly_income?: MedicalParticipantDetailOutMonthlyIncome;
+  annual_income?: MedicalParticipantDetailOutAnnualIncome;
+  income_source?: MedicalParticipantDetailOutIncomeSource;
+  employment_status?: MedicalParticipantDetailOutEmploymentStatus;
+  estimated_assets?: MedicalParticipantDetailOutEstimatedAssets;
+  fpl_percentage?: MedicalParticipantDetailOutFplPercentage;
+  income_eligible?: MedicalParticipantDetailOutIncomeEligible;
+  asset_eligible?: MedicalParticipantDetailOutAssetEligible;
+  citizenship_status?: MedicalParticipantDetailOutCitizenshipStatus;
+  residency_eligible?: MedicalParticipantDetailOutResidencyEligible;
+  overall_eligible?: MedicalParticipantDetailOutOverallEligible;
+  coverage_category?: MedicalParticipantDetailOutCoverageCategory;
+  premium_amount?: MedicalParticipantDetailOutPremiumAmount;
+  copay_amount?: MedicalParticipantDetailOutCopayAmount;
+  application_date?: MedicalParticipantDetailOutApplicationDate;
+  decision_date?: MedicalParticipantDetailOutDecisionDate;
+  application_status?: MedicalParticipantDetailOutApplicationStatus;
+  enrollment_date?: MedicalParticipantDetailOutEnrollmentDate;
+  county?: MedicalParticipantDetailOutCounty;
+}
+
 export type MedicalParticipantOutName = string | null;
 
 export type MedicalParticipantOutGender = string | null;
@@ -100,6 +196,90 @@ export interface PersonProfileOut {
   last_name?: PersonProfileOutLastName;
   birthdate?: PersonProfileOutBirthdate;
   full_name?: PersonProfileOutFullName;
+}
+
+export type SnapParticipantDetailOutSnapId = string | null;
+
+export type SnapParticipantDetailOutFirstName = string | null;
+
+export type SnapParticipantDetailOutLastName = string | null;
+
+export type SnapParticipantDetailOutBirthdate = string | null;
+
+export type SnapParticipantDetailOutAge = number | null;
+
+export type SnapParticipantDetailOutGender = string | null;
+
+export type SnapParticipantDetailOutRace = string | null;
+
+export type SnapParticipantDetailOutEthnicity = string | null;
+
+export type SnapParticipantDetailOutIsDisabled = boolean | null;
+
+export type SnapParticipantDetailOutLanguage = string | null;
+
+export type SnapParticipantDetailOutHouseholdSize = number | null;
+
+export type SnapParticipantDetailOutHouseholdType = string | null;
+
+export type SnapParticipantDetailOutMonthlyIncome = number | null;
+
+export type SnapParticipantDetailOutIncomeSource = string | null;
+
+export type SnapParticipantDetailOutEstimatedAssets = number | null;
+
+export type SnapParticipantDetailOutIncomeLimit = number | null;
+
+export type SnapParticipantDetailOutAssetLimit = number | null;
+
+export type SnapParticipantDetailOutIncomeEligible = boolean | null;
+
+export type SnapParticipantDetailOutAssetEligible = boolean | null;
+
+export type SnapParticipantDetailOutWorkRequirementExempt = boolean | null;
+
+export type SnapParticipantDetailOutOverallEligible = boolean | null;
+
+export type SnapParticipantDetailOutMaxBenefit = number | null;
+
+export type SnapParticipantDetailOutMonthlySnapBenefit = number | null;
+
+export type SnapParticipantDetailOutAnnualSnapBenefit = number | null;
+
+export type SnapParticipantDetailOutSnapApplicationDate = string | null;
+
+export type SnapParticipantDetailOutSnapDecisionDate = string | null;
+
+export type SnapParticipantDetailOutApplicationStatus = string | null;
+
+export interface SnapParticipantDetailOut {
+  snap_id?: SnapParticipantDetailOutSnapId;
+  first_name?: SnapParticipantDetailOutFirstName;
+  last_name?: SnapParticipantDetailOutLastName;
+  birthdate?: SnapParticipantDetailOutBirthdate;
+  age?: SnapParticipantDetailOutAge;
+  gender?: SnapParticipantDetailOutGender;
+  race?: SnapParticipantDetailOutRace;
+  ethnicity?: SnapParticipantDetailOutEthnicity;
+  is_disabled?: SnapParticipantDetailOutIsDisabled;
+  language?: SnapParticipantDetailOutLanguage;
+  household_size?: SnapParticipantDetailOutHouseholdSize;
+  household_type?: SnapParticipantDetailOutHouseholdType;
+  monthly_income?: SnapParticipantDetailOutMonthlyIncome;
+  income_source?: SnapParticipantDetailOutIncomeSource;
+  estimated_assets?: SnapParticipantDetailOutEstimatedAssets;
+  income_limit?: SnapParticipantDetailOutIncomeLimit;
+  asset_limit?: SnapParticipantDetailOutAssetLimit;
+  income_eligible?: SnapParticipantDetailOutIncomeEligible;
+  asset_eligible?: SnapParticipantDetailOutAssetEligible;
+  work_requirement_exempt?: SnapParticipantDetailOutWorkRequirementExempt;
+  overall_eligible?: SnapParticipantDetailOutOverallEligible;
+  max_benefit?: SnapParticipantDetailOutMaxBenefit;
+  monthly_snap_benefit?: SnapParticipantDetailOutMonthlySnapBenefit;
+  annual_snap_benefit?: SnapParticipantDetailOutAnnualSnapBenefit;
+  snap_application_date?: SnapParticipantDetailOutSnapApplicationDate;
+  snap_decision_date?: SnapParticipantDetailOutSnapDecisionDate;
+  application_status?: SnapParticipantDetailOutApplicationStatus;
 }
 
 export type TimelineEventOutAApplicationDate = string | null;
@@ -1686,6 +1866,608 @@ export function useGetTimelineSuspense<
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
   const queryOptions = getGetTimelineSuspenseQueryOptions(personId, options);
+
+  const query = useSuspenseQuery(
+    queryOptions,
+    queryClient,
+  ) as UseSuspenseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  query.queryKey = queryOptions.queryKey;
+
+  return query;
+}
+
+/**
+ * Get SNAP participant details from the benefits360.bronze.snap_participants table.
+ * @summary Get Snap Participant
+ */
+export const getSnapParticipant = (
+  snapId: string,
+  options?: AxiosRequestConfig,
+): Promise<AxiosResponse<SnapParticipantDetailOut>> => {
+  return axios.default.get(`/api/snap-participant/${snapId}`, options);
+};
+
+export const getGetSnapParticipantQueryKey = (snapId?: string) => {
+  return [`/api/snap-participant/${snapId}`] as const;
+};
+
+export const getGetSnapParticipantQueryOptions = <
+  TData = Awaited<ReturnType<typeof getSnapParticipant>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  snapId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getSnapParticipant>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+) => {
+  const { query: queryOptions, axios: axiosOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetSnapParticipantQueryKey(snapId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getSnapParticipant>>
+  > = ({ signal }) => getSnapParticipant(snapId, { signal, ...axiosOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!snapId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getSnapParticipant>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetSnapParticipantQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getSnapParticipant>>
+>;
+export type GetSnapParticipantQueryError = AxiosError<HTTPValidationError>;
+
+export function useGetSnapParticipant<
+  TData = Awaited<ReturnType<typeof getSnapParticipant>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  snapId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getSnapParticipant>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSnapParticipant>>,
+          TError,
+          Awaited<ReturnType<typeof getSnapParticipant>>
+        >,
+        "initialData"
+      >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetSnapParticipant<
+  TData = Awaited<ReturnType<typeof getSnapParticipant>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  snapId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getSnapParticipant>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSnapParticipant>>,
+          TError,
+          Awaited<ReturnType<typeof getSnapParticipant>>
+        >,
+        "initialData"
+      >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetSnapParticipant<
+  TData = Awaited<ReturnType<typeof getSnapParticipant>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  snapId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getSnapParticipant>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get Snap Participant
+ */
+
+export function useGetSnapParticipant<
+  TData = Awaited<ReturnType<typeof getSnapParticipant>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  snapId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getSnapParticipant>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetSnapParticipantQueryOptions(snapId, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey;
+
+  return query;
+}
+
+export const getGetSnapParticipantSuspenseQueryOptions = <
+  TData = Awaited<ReturnType<typeof getSnapParticipant>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  snapId: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getSnapParticipant>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+) => {
+  const { query: queryOptions, axios: axiosOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetSnapParticipantQueryKey(snapId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getSnapParticipant>>
+  > = ({ signal }) => getSnapParticipant(snapId, { signal, ...axiosOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseSuspenseQueryOptions<
+    Awaited<ReturnType<typeof getSnapParticipant>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetSnapParticipantSuspenseQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getSnapParticipant>>
+>;
+export type GetSnapParticipantSuspenseQueryError =
+  AxiosError<HTTPValidationError>;
+
+export function useGetSnapParticipantSuspense<
+  TData = Awaited<ReturnType<typeof getSnapParticipant>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  snapId: string,
+  options: {
+    query: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getSnapParticipant>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetSnapParticipantSuspense<
+  TData = Awaited<ReturnType<typeof getSnapParticipant>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  snapId: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getSnapParticipant>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetSnapParticipantSuspense<
+  TData = Awaited<ReturnType<typeof getSnapParticipant>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  snapId: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getSnapParticipant>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get Snap Participant
+ */
+
+export function useGetSnapParticipantSuspense<
+  TData = Awaited<ReturnType<typeof getSnapParticipant>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  snapId: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getSnapParticipant>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetSnapParticipantSuspenseQueryOptions(
+    snapId,
+    options,
+  );
+
+  const query = useSuspenseQuery(
+    queryOptions,
+    queryClient,
+  ) as UseSuspenseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  query.queryKey = queryOptions.queryKey;
+
+  return query;
+}
+
+/**
+ * Get Medical participant details from the benefits360.bronze.medical_participants table.
+ * @summary Get Medical Participant
+ */
+export const getMedicalParticipant = (
+  caseId: string,
+  options?: AxiosRequestConfig,
+): Promise<AxiosResponse<MedicalParticipantDetailOut>> => {
+  return axios.default.get(`/api/medical-participant/${caseId}`, options);
+};
+
+export const getGetMedicalParticipantQueryKey = (caseId?: string) => {
+  return [`/api/medical-participant/${caseId}`] as const;
+};
+
+export const getGetMedicalParticipantQueryOptions = <
+  TData = Awaited<ReturnType<typeof getMedicalParticipant>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  caseId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getMedicalParticipant>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+) => {
+  const { query: queryOptions, axios: axiosOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetMedicalParticipantQueryKey(caseId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getMedicalParticipant>>
+  > = ({ signal }) =>
+    getMedicalParticipant(caseId, { signal, ...axiosOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!caseId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getMedicalParticipant>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetMedicalParticipantQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getMedicalParticipant>>
+>;
+export type GetMedicalParticipantQueryError = AxiosError<HTTPValidationError>;
+
+export function useGetMedicalParticipant<
+  TData = Awaited<ReturnType<typeof getMedicalParticipant>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  caseId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getMedicalParticipant>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMedicalParticipant>>,
+          TError,
+          Awaited<ReturnType<typeof getMedicalParticipant>>
+        >,
+        "initialData"
+      >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetMedicalParticipant<
+  TData = Awaited<ReturnType<typeof getMedicalParticipant>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  caseId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getMedicalParticipant>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMedicalParticipant>>,
+          TError,
+          Awaited<ReturnType<typeof getMedicalParticipant>>
+        >,
+        "initialData"
+      >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetMedicalParticipant<
+  TData = Awaited<ReturnType<typeof getMedicalParticipant>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  caseId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getMedicalParticipant>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get Medical Participant
+ */
+
+export function useGetMedicalParticipant<
+  TData = Awaited<ReturnType<typeof getMedicalParticipant>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  caseId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getMedicalParticipant>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetMedicalParticipantQueryOptions(caseId, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey;
+
+  return query;
+}
+
+export const getGetMedicalParticipantSuspenseQueryOptions = <
+  TData = Awaited<ReturnType<typeof getMedicalParticipant>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  caseId: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getMedicalParticipant>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+) => {
+  const { query: queryOptions, axios: axiosOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetMedicalParticipantQueryKey(caseId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getMedicalParticipant>>
+  > = ({ signal }) =>
+    getMedicalParticipant(caseId, { signal, ...axiosOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseSuspenseQueryOptions<
+    Awaited<ReturnType<typeof getMedicalParticipant>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetMedicalParticipantSuspenseQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getMedicalParticipant>>
+>;
+export type GetMedicalParticipantSuspenseQueryError =
+  AxiosError<HTTPValidationError>;
+
+export function useGetMedicalParticipantSuspense<
+  TData = Awaited<ReturnType<typeof getMedicalParticipant>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  caseId: string,
+  options: {
+    query: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getMedicalParticipant>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetMedicalParticipantSuspense<
+  TData = Awaited<ReturnType<typeof getMedicalParticipant>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  caseId: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getMedicalParticipant>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetMedicalParticipantSuspense<
+  TData = Awaited<ReturnType<typeof getMedicalParticipant>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  caseId: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getMedicalParticipant>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get Medical Participant
+ */
+
+export function useGetMedicalParticipantSuspense<
+  TData = Awaited<ReturnType<typeof getMedicalParticipant>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  caseId: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getMedicalParticipant>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetMedicalParticipantSuspenseQueryOptions(
+    caseId,
+    options,
+  );
 
   const query = useSuspenseQuery(
     queryOptions,

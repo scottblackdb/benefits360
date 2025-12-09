@@ -1,6 +1,6 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query
-from .models import VersionOut, VectorSearchRequest, VectorSearchResponse, VectorSearchResult, PersonProfileOut, MedicalParticipantOut, MedicalParticipantsResponse, TimelineEventOut, TimelineResponse
+from .models import VersionOut, VectorSearchRequest, VectorSearchResponse, VectorSearchResult, PersonProfileOut, MedicalParticipantOut, MedicalParticipantsResponse, TimelineEventOut, TimelineResponse, SnapParticipantDetailOut, MedicalParticipantDetailOut
 from databricks.sdk import WorkspaceClient
 from databricks.sdk.service.iam import User as UserOut
 from databricks.sdk.service.sql import StatementParameterListItem
@@ -324,4 +324,202 @@ def get_timeline(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to retrieve timeline: {str(e)}"
+        )
+
+
+@api.get("/snap-participant/{snap_id}", response_model=SnapParticipantDetailOut, operation_id="getSnapParticipant")
+def get_snap_participant(
+    snap_id: str,
+    obo_ws: Annotated[WorkspaceClient, Depends(get_obo_ws)],
+):
+    """
+    Get SNAP participant details from the benefits360.bronze.snap_participants table.
+    """
+    try:
+        warehouse_id = "17f6d9fabd1c7633"
+        
+        logger.info(f"Fetching SNAP participant for snap_id: {snap_id}")
+        
+        # Execute SQL query using Databricks SQL warehouse with parameterized query
+        result = obo_ws.statement_execution.execute_statement(
+            warehouse_id=warehouse_id,
+            statement="""
+                SELECT 
+                    snap_id,
+                    first_name,
+                    last_name,
+                    birthdate,
+                    age,
+                    gender,
+                    race,
+                    ethnicity,
+                    is_disabled,
+                    language,
+                    household_size,
+                    household_type,
+                    monthly_income,
+                    income_source,
+                    estimated_assets,
+                    income_limit,
+                    asset_limit,
+                    income_eligible,
+                    asset_eligible,
+                    work_requirement_exempt,
+                    overall_eligible,
+                    max_benefit,
+                    monthly_snap_benefit,
+                    annual_snap_benefit,
+                    snap_application_date,
+                    snap_decision_date,
+                    application_status
+                FROM benefits360.bronze.snap_participants
+                WHERE snap_id = :snap_id
+                LIMIT 1
+            """,
+            parameters=[
+                StatementParameterListItem(name="snap_id", value=snap_id)
+            ],
+            wait_timeout="30s"
+        )
+        
+        data_array = getattr(getattr(result, 'result', None), 'data_array', None)
+        
+        if not data_array:
+            raise HTTPException(
+                status_code=404,
+                detail=f"SNAP participant with ID {snap_id} not found"
+            )
+        
+        row = data_array[0]
+        column_names = [
+            "snap_id", "first_name", "last_name", "birthdate", "age", "gender",
+            "race", "ethnicity", "is_disabled", "language", "household_size",
+            "household_type", "monthly_income", "income_source", "estimated_assets",
+            "income_limit", "asset_limit", "income_eligible", "asset_eligible",
+            "work_requirement_exempt", "overall_eligible", "max_benefit",
+            "monthly_snap_benefit", "annual_snap_benefit", "snap_application_date",
+            "snap_decision_date", "application_status"
+        ]
+        
+        participant_data = {}
+        if isinstance(row, dict):
+            participant_data = {col: row.get(col) for col in column_names}
+        elif isinstance(row, list):
+            participant_data = {column_names[i]: row[i] for i in range(min(len(row), len(column_names)))}
+        elif hasattr(row, '__dict__'):
+            participant_data = {col: getattr(row, col, None) for col in column_names}
+        else:
+            raise ValueError(f"Unable to parse row data format: {type(row)}")
+        
+        logger.info(f"Found SNAP participant for snap_id: {snap_id}")
+        return SnapParticipantDetailOut(**participant_data)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get SNAP participant for snap_id {snap_id}: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve SNAP participant: {str(e)}"
+        )
+
+
+@api.get("/medical-participant/{case_id}", response_model=MedicalParticipantDetailOut, operation_id="getMedicalParticipant")
+def get_medical_participant(
+    case_id: str,
+    obo_ws: Annotated[WorkspaceClient, Depends(get_obo_ws)],
+):
+    """
+    Get Medical participant details from the benefits360.bronze.medical_participants table.
+    """
+    try:
+        warehouse_id = "17f6d9fabd1c7633"
+        
+        logger.info(f"Fetching Medical participant for case_id: {case_id}")
+        
+        # Execute SQL query using Databricks SQL warehouse with parameterized query
+        result = obo_ws.statement_execution.execute_statement(
+            warehouse_id=warehouse_id,
+            statement="""
+                SELECT 
+                    first_name,
+                    last_name,
+                    case_id,
+                    birthdate,
+                    age,
+                    gender,
+                    race,
+                    ethnicity,
+                    is_disabled,
+                    language,
+                    household_size,
+                    household_type,
+                    monthly_income,
+                    annual_income,
+                    income_source,
+                    employment_status,
+                    estimated_assets,
+                    fpl_percentage,
+                    income_eligible,
+                    asset_eligible,
+                    citizenship_status,
+                    residency_eligible,
+                    overall_eligible,
+                    coverage_category,
+                    premium_amount,
+                    copay_amount,
+                    application_date,
+                    decision_date,
+                    application_status,
+                    enrollment_date,
+                    county
+                FROM benefits360.bronze.medical_participants
+                WHERE case_id = :case_id
+                LIMIT 1
+            """,
+            parameters=[
+                StatementParameterListItem(name="case_id", value=case_id)
+            ],
+            wait_timeout="30s"
+        )
+        
+        data_array = getattr(getattr(result, 'result', None), 'data_array', None)
+        
+        if not data_array:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Medical participant with case_id {case_id} not found"
+            )
+        
+        row = data_array[0]
+        column_names = [
+            "first_name", "last_name", "case_id", "birthdate", "age", "gender",
+            "race", "ethnicity", "is_disabled", "language", "household_size",
+            "household_type", "monthly_income", "annual_income", "income_source",
+            "employment_status", "estimated_assets", "fpl_percentage", "income_eligible",
+            "asset_eligible", "citizenship_status", "residency_eligible", "overall_eligible",
+            "coverage_category", "premium_amount", "copay_amount", "application_date",
+            "decision_date", "application_status", "enrollment_date", "county"
+        ]
+        
+        participant_data = {}
+        if isinstance(row, dict):
+            participant_data = {col: row.get(col) for col in column_names}
+        elif isinstance(row, list):
+            participant_data = {column_names[i]: row[i] for i in range(min(len(row), len(column_names)))}
+        elif hasattr(row, '__dict__'):
+            participant_data = {col: getattr(row, col, None) for col in column_names}
+        else:
+            raise ValueError(f"Unable to parse row data format: {type(row)}")
+        
+        logger.info(f"Found Medical participant for case_id: {case_id}")
+        return MedicalParticipantDetailOut(**participant_data)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get Medical participant for case_id {case_id}: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve Medical participant: {str(e)}"
         )

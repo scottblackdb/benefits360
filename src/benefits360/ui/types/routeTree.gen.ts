@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './../routes/__root'
 import { Route as SidebarRouteRouteImport } from './../routes/_sidebar/route'
 import { Route as IndexRouteImport } from './../routes/index'
 import { Route as SidebarProfileRouteImport } from './../routes/_sidebar/profile'
+import { Route as SidebarSnapDetailsSnapIdRouteImport } from './../routes/_sidebar/snap-details.$snapId'
+import { Route as SidebarMedicalDetailsCaseIdRouteImport } from './../routes/_sidebar/medical-details.$caseId'
 
 const SidebarRouteRoute = SidebarRouteRouteImport.update({
   id: '/_sidebar',
@@ -27,27 +29,55 @@ const SidebarProfileRoute = SidebarProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => SidebarRouteRoute,
 } as any)
+const SidebarSnapDetailsSnapIdRoute =
+  SidebarSnapDetailsSnapIdRouteImport.update({
+    id: '/snap-details/$snapId',
+    path: '/snap-details/$snapId',
+    getParentRoute: () => SidebarRouteRoute,
+  } as any)
+const SidebarMedicalDetailsCaseIdRoute =
+  SidebarMedicalDetailsCaseIdRouteImport.update({
+    id: '/medical-details/$caseId',
+    path: '/medical-details/$caseId',
+    getParentRoute: () => SidebarRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/profile': typeof SidebarProfileRoute
+  '/medical-details/$caseId': typeof SidebarMedicalDetailsCaseIdRoute
+  '/snap-details/$snapId': typeof SidebarSnapDetailsSnapIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/profile': typeof SidebarProfileRoute
+  '/medical-details/$caseId': typeof SidebarMedicalDetailsCaseIdRoute
+  '/snap-details/$snapId': typeof SidebarSnapDetailsSnapIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_sidebar': typeof SidebarRouteRouteWithChildren
   '/_sidebar/profile': typeof SidebarProfileRoute
+  '/_sidebar/medical-details/$caseId': typeof SidebarMedicalDetailsCaseIdRoute
+  '/_sidebar/snap-details/$snapId': typeof SidebarSnapDetailsSnapIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/profile'
+  fullPaths:
+    | '/'
+    | '/profile'
+    | '/medical-details/$caseId'
+    | '/snap-details/$snapId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/profile'
-  id: '__root__' | '/' | '/_sidebar' | '/_sidebar/profile'
+  to: '/' | '/profile' | '/medical-details/$caseId' | '/snap-details/$snapId'
+  id:
+    | '__root__'
+    | '/'
+    | '/_sidebar'
+    | '/_sidebar/profile'
+    | '/_sidebar/medical-details/$caseId'
+    | '/_sidebar/snap-details/$snapId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -78,15 +108,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SidebarProfileRouteImport
       parentRoute: typeof SidebarRouteRoute
     }
+    '/_sidebar/snap-details/$snapId': {
+      id: '/_sidebar/snap-details/$snapId'
+      path: '/snap-details/$snapId'
+      fullPath: '/snap-details/$snapId'
+      preLoaderRoute: typeof SidebarSnapDetailsSnapIdRouteImport
+      parentRoute: typeof SidebarRouteRoute
+    }
+    '/_sidebar/medical-details/$caseId': {
+      id: '/_sidebar/medical-details/$caseId'
+      path: '/medical-details/$caseId'
+      fullPath: '/medical-details/$caseId'
+      preLoaderRoute: typeof SidebarMedicalDetailsCaseIdRouteImport
+      parentRoute: typeof SidebarRouteRoute
+    }
   }
 }
 
 interface SidebarRouteRouteChildren {
   SidebarProfileRoute: typeof SidebarProfileRoute
+  SidebarMedicalDetailsCaseIdRoute: typeof SidebarMedicalDetailsCaseIdRoute
+  SidebarSnapDetailsSnapIdRoute: typeof SidebarSnapDetailsSnapIdRoute
 }
 
 const SidebarRouteRouteChildren: SidebarRouteRouteChildren = {
   SidebarProfileRoute: SidebarProfileRoute,
+  SidebarMedicalDetailsCaseIdRoute: SidebarMedicalDetailsCaseIdRoute,
+  SidebarSnapDetailsSnapIdRoute: SidebarSnapDetailsSnapIdRoute,
 }
 
 const SidebarRouteRouteWithChildren = SidebarRouteRoute._addFileChildren(

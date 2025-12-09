@@ -96,6 +96,12 @@ function ProfileContent() {
       setMedicalParticipants([]);
       setTimelineEvents([]);
       setShowSearchResults(true);
+      
+      // Clear snap_id and med_id from localStorage when starting new search
+      localStorage.removeItem("currentSnapId");
+      localStorage.removeItem("currentMedId");
+      window.dispatchEvent(new Event("snapIdChanged"));
+      window.dispatchEvent(new Event("medIdChanged"));
     },
     onError: () => {
       setSearchResults([]);
@@ -121,6 +127,24 @@ function ProfileContent() {
     onSuccess: (data) => {
       setSelectedProfile(data);
       setShowSearchResults(false);
+      
+      // Store snap_id in localStorage for sidebar navigation
+      if (data.snap_id) {
+        localStorage.setItem("currentSnapId", data.snap_id);
+      } else {
+        localStorage.removeItem("currentSnapId");
+      }
+      
+      // Store medical_id (case_id) in localStorage for sidebar navigation
+      if (data.medical_id) {
+        localStorage.setItem("currentMedId", data.medical_id);
+      } else {
+        localStorage.removeItem("currentMedId");
+      }
+      
+      // Dispatch custom events to notify sidebar of changes
+      window.dispatchEvent(new Event("snapIdChanged"));
+      window.dispatchEvent(new Event("medIdChanged"));
       
       // Fetch medical participants if we have the required data
       if (data.first_name && data.last_name && data.birthdate) {
