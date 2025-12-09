@@ -16,9 +16,10 @@ import Logo from "@/components/apx/Logo";
 
 interface SidebarLayoutProps {
   children?: ReactNode;
+  searchHeader?: ReactNode;
 }
 
-function SidebarLayout({ children }: SidebarLayoutProps) {
+function SidebarLayout({ children, searchHeader }: SidebarLayoutProps) {
   return (
     <SidebarProvider>
       <Sidebar>
@@ -39,6 +40,12 @@ function SidebarLayout({ children }: SidebarLayoutProps) {
           <div className="flex-1" />
           <ModeToggle />
         </header>
+        {/* Search Header - Shown on all pages */}
+        {searchHeader && (
+          <div className="sticky top-16 z-40">
+            {searchHeader}
+          </div>
+        )}
         <div className="flex flex-1 justify-center overflow-auto">
           <div className="flex flex-1 flex-col gap-4 p-6 max-w-7xl">
             <Outlet />

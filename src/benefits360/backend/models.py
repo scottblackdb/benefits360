@@ -133,3 +133,28 @@ class MedicalParticipantDetailOut(BaseModel):
     application_status: Optional[str] = None
     enrollment_date: Optional[str] = None
     county: Optional[str] = None
+
+
+class AssistanceApplicationDetailOut(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    birthdate: Optional[str] = None
+    address: Optional[str] = None
+    street_address: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    zip_code: Optional[str] = None
+    phone_number: Optional[str] = None
+    created_timestamp: Optional[str] = None
+    person_id: Optional[str] = None
+    case_id: Optional[str] = None
+    gender: Optional[str] = None
+    race: Optional[str] = None
+    ethnicity: Optional[str] = None
+    language: Optional[str] = None
+    is_disabled: Optional[bool] = None
+    age: Optional[int] = None
+    application_date: Optional[str] = None
+    decision_date: Optional[str] = None
+    application_status: Optional[str] = None
+    assistance_type: Optional[str] = None

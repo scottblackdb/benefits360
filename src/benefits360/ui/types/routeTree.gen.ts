@@ -14,6 +14,7 @@ import { Route as IndexRouteImport } from './../routes/index'
 import { Route as SidebarProfileRouteImport } from './../routes/_sidebar/profile'
 import { Route as SidebarSnapDetailsSnapIdRouteImport } from './../routes/_sidebar/snap-details.$snapId'
 import { Route as SidebarMedicalDetailsCaseIdRouteImport } from './../routes/_sidebar/medical-details.$caseId'
+import { Route as SidebarAssistanceDetailsCaseIdRouteImport } from './../routes/_sidebar/assistance-details.$caseId'
 
 const SidebarRouteRoute = SidebarRouteRouteImport.update({
   id: '/_sidebar',
@@ -41,16 +42,24 @@ const SidebarMedicalDetailsCaseIdRoute =
     path: '/medical-details/$caseId',
     getParentRoute: () => SidebarRouteRoute,
   } as any)
+const SidebarAssistanceDetailsCaseIdRoute =
+  SidebarAssistanceDetailsCaseIdRouteImport.update({
+    id: '/assistance-details/$caseId',
+    path: '/assistance-details/$caseId',
+    getParentRoute: () => SidebarRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/profile': typeof SidebarProfileRoute
+  '/assistance-details/$caseId': typeof SidebarAssistanceDetailsCaseIdRoute
   '/medical-details/$caseId': typeof SidebarMedicalDetailsCaseIdRoute
   '/snap-details/$snapId': typeof SidebarSnapDetailsSnapIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/profile': typeof SidebarProfileRoute
+  '/assistance-details/$caseId': typeof SidebarAssistanceDetailsCaseIdRoute
   '/medical-details/$caseId': typeof SidebarMedicalDetailsCaseIdRoute
   '/snap-details/$snapId': typeof SidebarSnapDetailsSnapIdRoute
 }
@@ -59,6 +68,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_sidebar': typeof SidebarRouteRouteWithChildren
   '/_sidebar/profile': typeof SidebarProfileRoute
+  '/_sidebar/assistance-details/$caseId': typeof SidebarAssistanceDetailsCaseIdRoute
   '/_sidebar/medical-details/$caseId': typeof SidebarMedicalDetailsCaseIdRoute
   '/_sidebar/snap-details/$snapId': typeof SidebarSnapDetailsSnapIdRoute
 }
@@ -67,15 +77,22 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/profile'
+    | '/assistance-details/$caseId'
     | '/medical-details/$caseId'
     | '/snap-details/$snapId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/profile' | '/medical-details/$caseId' | '/snap-details/$snapId'
+  to:
+    | '/'
+    | '/profile'
+    | '/assistance-details/$caseId'
+    | '/medical-details/$caseId'
+    | '/snap-details/$snapId'
   id:
     | '__root__'
     | '/'
     | '/_sidebar'
     | '/_sidebar/profile'
+    | '/_sidebar/assistance-details/$caseId'
     | '/_sidebar/medical-details/$caseId'
     | '/_sidebar/snap-details/$snapId'
   fileRoutesById: FileRoutesById
@@ -122,17 +139,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SidebarMedicalDetailsCaseIdRouteImport
       parentRoute: typeof SidebarRouteRoute
     }
+    '/_sidebar/assistance-details/$caseId': {
+      id: '/_sidebar/assistance-details/$caseId'
+      path: '/assistance-details/$caseId'
+      fullPath: '/assistance-details/$caseId'
+      preLoaderRoute: typeof SidebarAssistanceDetailsCaseIdRouteImport
+      parentRoute: typeof SidebarRouteRoute
+    }
   }
 }
 
 interface SidebarRouteRouteChildren {
   SidebarProfileRoute: typeof SidebarProfileRoute
+  SidebarAssistanceDetailsCaseIdRoute: typeof SidebarAssistanceDetailsCaseIdRoute
   SidebarMedicalDetailsCaseIdRoute: typeof SidebarMedicalDetailsCaseIdRoute
   SidebarSnapDetailsSnapIdRoute: typeof SidebarSnapDetailsSnapIdRoute
 }
 
 const SidebarRouteRouteChildren: SidebarRouteRouteChildren = {
   SidebarProfileRoute: SidebarProfileRoute,
+  SidebarAssistanceDetailsCaseIdRoute: SidebarAssistanceDetailsCaseIdRoute,
   SidebarMedicalDetailsCaseIdRoute: SidebarMedicalDetailsCaseIdRoute,
   SidebarSnapDetailsSnapIdRoute: SidebarSnapDetailsSnapIdRoute,
 }

@@ -1,6 +1,6 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query
-from .models import VersionOut, VectorSearchRequest, VectorSearchResponse, VectorSearchResult, PersonProfileOut, MedicalParticipantOut, MedicalParticipantsResponse, TimelineEventOut, TimelineResponse, SnapParticipantDetailOut, MedicalParticipantDetailOut
+from .models import VersionOut, VectorSearchRequest, VectorSearchResponse, VectorSearchResult, PersonProfileOut, MedicalParticipantOut, MedicalParticipantsResponse, TimelineEventOut, TimelineResponse, SnapParticipantDetailOut, MedicalParticipantDetailOut, AssistanceApplicationDetailOut
 from databricks.sdk import WorkspaceClient
 from databricks.sdk.service.iam import User as UserOut
 from databricks.sdk.service.sql import StatementParameterListItem
@@ -522,4 +522,94 @@ def get_medical_participant(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to retrieve Medical participant: {str(e)}"
+        )
+
+
+@api.get("/assistance-application/{case_id}", response_model=AssistanceApplicationDetailOut, operation_id="getAssistanceApplication")
+def get_assistance_application(
+    case_id: str,
+    obo_ws: Annotated[WorkspaceClient, Depends(get_obo_ws)],
+):
+    """
+    Get Assistance application details from the benefits360.bronze.assistance_applications table.
+    """
+    try:
+        warehouse_id = "17f6d9fabd1c7633"
+        
+        logger.info(f"Fetching Assistance application for case_id: {case_id}")
+        
+        # Execute SQL query using Databricks SQL warehouse with parameterized query
+        result = obo_ws.statement_execution.execute_statement(
+            warehouse_id=warehouse_id,
+            statement="""
+                SELECT 
+                    first_name,
+                    last_name,
+                    birthdate,
+                    address,
+                    street_address,
+                    city,
+                    state,
+                    zip_code,
+                    phone_number,
+                    created_timestamp,
+                    person_id,
+                    case_id,
+                    gender,
+                    race,
+                    ethnicity,
+                    language,
+                    is_disabled,
+                    age,
+                    application_date,
+                    decision_date,
+                    application_status,
+                    assistance_type
+                FROM benefits360.bronze.assistance_applications
+                WHERE case_id = :case_id
+                LIMIT 1
+            """,
+            parameters=[
+                StatementParameterListItem(name="case_id", value=case_id)
+            ],
+            wait_timeout="30s"
+        )
+        
+        data_array = getattr(getattr(result, 'result', None), 'data_array', None)
+        
+        if not data_array:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Assistance application with case_id {case_id} not found"
+            )
+        
+        row = data_array[0]
+        column_names = [
+            "first_name", "last_name", "birthdate", "address", "street_address",
+            "city", "state", "zip_code", "phone_number", "created_timestamp",
+            "person_id", "case_id", "gender", "race", "ethnicity", "language",
+            "is_disabled", "age", "application_date", "decision_date",
+            "application_status", "assistance_type"
+        ]
+        
+        application_data = {}
+        if isinstance(row, dict):
+            application_data = {col: row.get(col) for col in column_names}
+        elif isinstance(row, list):
+            application_data = {column_names[i]: row[i] for i in range(min(len(row), len(column_names)))}
+        elif hasattr(row, '__dict__'):
+            application_data = {col: getattr(row, col, None) for col in column_names}
+        else:
+            raise ValueError(f"Unable to parse row data format: {type(row)}")
+        
+        logger.info(f"Found Assistance application for case_id: {case_id}")
+        return AssistanceApplicationDetailOut(**application_data)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get Assistance application for case_id {case_id}: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve Assistance application: {str(e)}"
         )

@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { QueryErrorResetBoundary, useMutation } from "@tanstack/react-query";
 import { ErrorBoundary } from "react-error-boundary";
 import {
@@ -11,13 +11,12 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Input } from "@/components/ui/input";
 import {
   User,
   AlertCircle,
-  Search,
   Loader2,
 } from "lucide-react";
+import { useSearch } from "@/contexts/SearchContext";
 
 export const Route = createFileRoute("/_sidebar/profile")({
   component: () => <Profile />,
@@ -41,15 +40,6 @@ interface MedicalParticipant {
   language?: string;
 }
 
-interface SearchResult {
-  data: {
-    person_id?: string;
-    full_name?: string;
-    birthdate?: string;
-  };
-  score?: number;
-}
-
 interface TimelineEvent {
   a_application_date?: string;
   assistance_type?: string;
@@ -64,52 +54,13 @@ interface TimelineEvent {
 }
 
 function ProfileContent() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  // Use search context
+  const { searchQuery, searchResults, showSearchResults, setShowSearchResults } = useSearch();
+  
   const [selectedProfile, setSelectedProfile] = useState<PersonProfile | null>(null);
   const [medicalParticipants, setMedicalParticipants] = useState<MedicalParticipant[]>([]);
   const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>([]);
-  const [showSearchResults, setShowSearchResults] = useState(false);
-
-  // Search mutation
-  const searchMutation = useMutation({
-    mutationFn: async (query: string) => {
-      const response = await fetch("/api/search", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          query,
-          endpoint_name: "lewis",
-          index_name: "benefits360.silver.people_index_vec",
-          limit: 10,
-        }),
-      });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ detail: "Unknown error" }));
-        throw new Error(errorData.detail || `Search failed`);
-      }
-      return response.json();
-    },
-    onSuccess: (data) => {
-      setSearchResults(data.results || []);
-      setSelectedProfile(null);
-      setMedicalParticipants([]);
-      setTimelineEvents([]);
-      setShowSearchResults(true);
-      
-      // Clear snap_id and med_id from localStorage when starting new search
-      localStorage.removeItem("currentSnapId");
-      localStorage.removeItem("currentMedId");
-      window.dispatchEvent(new Event("snapIdChanged"));
-      window.dispatchEvent(new Event("medIdChanged"));
-    },
-    onError: () => {
-      setSearchResults([]);
-      setSelectedProfile(null);
-      setMedicalParticipants([]);
-      setTimelineEvents([]);
-    },
-  });
+  const [hasLoadedFromStorage, setHasLoadedFromStorage] = useState(false);
 
   // Profile load mutation
   const profileMutation = useMutation({
@@ -128,6 +79,11 @@ function ProfileContent() {
       setSelectedProfile(data);
       setShowSearchResults(false);
       
+      // Store person_id for restoring the profile when navigating back
+      if (data.person_id) {
+        localStorage.setItem("currentPersonId", data.person_id);
+      }
+      
       // Store snap_id in localStorage for sidebar navigation
       if (data.snap_id) {
         localStorage.setItem("currentSnapId", data.snap_id);
@@ -142,9 +98,17 @@ function ProfileContent() {
         localStorage.removeItem("currentMedId");
       }
       
+      // Store assistance_id (case_id) in localStorage for sidebar navigation
+      if (data.assistance_id) {
+        localStorage.setItem("currentAssistanceId", data.assistance_id);
+      } else {
+        localStorage.removeItem("currentAssistanceId");
+      }
+      
       // Dispatch custom events to notify sidebar of changes
       window.dispatchEvent(new Event("snapIdChanged"));
       window.dispatchEvent(new Event("medIdChanged"));
+      window.dispatchEvent(new Event("assistanceIdChanged"));
       
       // Fetch medical participants if we have the required data
       if (data.first_name && data.last_name && data.birthdate) {
@@ -210,75 +174,24 @@ function ProfileContent() {
     },
   });
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      searchMutation.mutate(searchQuery.trim());
+  // Load stored profile on component mount
+  useEffect(() => {
+    if (!hasLoadedFromStorage) {
+      const storedPersonId = localStorage.getItem("currentPersonId");
+      if (storedPersonId && !selectedProfile) {
+        profileMutation.mutate(storedPersonId);
+      }
+      setHasLoadedFromStorage(true);
     }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      handleSearch(e);
-    }
-  };
+  }, [hasLoadedFromStorage, selectedProfile, profileMutation]);
 
   return (
     <div className="space-y-6">
-      {/* Search Header - Always Visible */}
-      <Card className="border-primary/20 sticky top-0 z-10 bg-background">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Search className="h-5 w-5" />
-            Search People
-          </CardTitle>
-          <CardDescription>
-            Search for people by full name using vector search
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSearch} className="space-y-4">
-            <div className="flex gap-2">
-              <Input
-                type="text"
-                placeholder="Enter full name to search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={handleKeyDown}
-                className="flex-1"
-              />
-              <Button
-                type="submit"
-                disabled={searchMutation.isPending || !searchQuery.trim()}
-              >
-                {searchMutation.isPending ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Searching...
-                  </>
-                ) : (
-                  <>
-                    <Search className="h-4 w-4 mr-2" />
-                    Search
-                  </>
-                )}
-              </Button>
-            </div>
-          </form>
-
-          {searchMutation.isError && (
-            <div className="mt-4 p-3 rounded-md bg-destructive/10 border border-destructive/20">
-              <p className="text-sm font-medium text-destructive">Search failed</p>
-              <p className="text-xs text-destructive/80 mt-1">
-                {searchMutation.error instanceof Error
-                  ? searchMutation.error.message
-                  : "An error occurred while searching. Please try again."}
-              </p>
-            </div>
-          )}
-
-          {profileMutation.isError && (
-            <div className="mt-4 p-3 rounded-md bg-destructive/10 border border-destructive/20">
+      {/* Profile Load Error */}
+      {profileMutation.isError && (
+        <Card className="border-destructive/20">
+          <CardContent className="pt-6">
+            <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20">
               <p className="text-sm font-medium text-destructive">Failed to load profile</p>
               <p className="text-xs text-destructive/80 mt-1">
                 {profileMutation.error instanceof Error
@@ -286,9 +199,9 @@ function ProfileContent() {
                   : "An error occurred while loading the profile. Please try again."}
               </p>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Search Results - Shown/Hidden based on state */}
       {showSearchResults && searchResults.length > 0 && (
@@ -343,11 +256,11 @@ function ProfileContent() {
       )}
 
       {/* No Results Message */}
-      {showSearchResults && searchResults.length === 0 && !searchMutation.isPending && (
+      {showSearchResults && searchResults.length === 0 && (
         <Card className="border-primary/20">
           <CardContent className="pt-6">
             <div className="text-center py-8">
-              <p className="text-muted-foreground">No results found for "{searchQuery}"</p>
+              <p className="text-muted-foreground">No results found{searchQuery && ` for "${searchQuery}"`}</p>
               <p className="text-sm text-muted-foreground mt-2">Try a different search term</p>
             </div>
           </CardContent>

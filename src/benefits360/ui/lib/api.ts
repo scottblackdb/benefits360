@@ -25,6 +25,75 @@ import type {
 import * as axios from "axios";
 import type { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
 
+export type AssistanceApplicationDetailOutFirstName = string | null;
+
+export type AssistanceApplicationDetailOutLastName = string | null;
+
+export type AssistanceApplicationDetailOutBirthdate = string | null;
+
+export type AssistanceApplicationDetailOutAddress = string | null;
+
+export type AssistanceApplicationDetailOutStreetAddress = string | null;
+
+export type AssistanceApplicationDetailOutCity = string | null;
+
+export type AssistanceApplicationDetailOutState = string | null;
+
+export type AssistanceApplicationDetailOutZipCode = string | null;
+
+export type AssistanceApplicationDetailOutPhoneNumber = string | null;
+
+export type AssistanceApplicationDetailOutCreatedTimestamp = string | null;
+
+export type AssistanceApplicationDetailOutPersonId = string | null;
+
+export type AssistanceApplicationDetailOutCaseId = string | null;
+
+export type AssistanceApplicationDetailOutGender = string | null;
+
+export type AssistanceApplicationDetailOutRace = string | null;
+
+export type AssistanceApplicationDetailOutEthnicity = string | null;
+
+export type AssistanceApplicationDetailOutLanguage = string | null;
+
+export type AssistanceApplicationDetailOutIsDisabled = boolean | null;
+
+export type AssistanceApplicationDetailOutAge = number | null;
+
+export type AssistanceApplicationDetailOutApplicationDate = string | null;
+
+export type AssistanceApplicationDetailOutDecisionDate = string | null;
+
+export type AssistanceApplicationDetailOutApplicationStatus = string | null;
+
+export type AssistanceApplicationDetailOutAssistanceType = string | null;
+
+export interface AssistanceApplicationDetailOut {
+  first_name?: AssistanceApplicationDetailOutFirstName;
+  last_name?: AssistanceApplicationDetailOutLastName;
+  birthdate?: AssistanceApplicationDetailOutBirthdate;
+  address?: AssistanceApplicationDetailOutAddress;
+  street_address?: AssistanceApplicationDetailOutStreetAddress;
+  city?: AssistanceApplicationDetailOutCity;
+  state?: AssistanceApplicationDetailOutState;
+  zip_code?: AssistanceApplicationDetailOutZipCode;
+  phone_number?: AssistanceApplicationDetailOutPhoneNumber;
+  created_timestamp?: AssistanceApplicationDetailOutCreatedTimestamp;
+  person_id?: AssistanceApplicationDetailOutPersonId;
+  case_id?: AssistanceApplicationDetailOutCaseId;
+  gender?: AssistanceApplicationDetailOutGender;
+  race?: AssistanceApplicationDetailOutRace;
+  ethnicity?: AssistanceApplicationDetailOutEthnicity;
+  language?: AssistanceApplicationDetailOutLanguage;
+  is_disabled?: AssistanceApplicationDetailOutIsDisabled;
+  age?: AssistanceApplicationDetailOutAge;
+  application_date?: AssistanceApplicationDetailOutApplicationDate;
+  decision_date?: AssistanceApplicationDetailOutDecisionDate;
+  application_status?: AssistanceApplicationDetailOutApplicationStatus;
+  assistance_type?: AssistanceApplicationDetailOutAssistanceType;
+}
+
 export type ComplexValueDisplay = string | null;
 
 export type ComplexValuePrimary = boolean | null;
@@ -2465,6 +2534,309 @@ export function useGetMedicalParticipantSuspense<
   queryKey: DataTag<QueryKey, TData, TError>;
 } {
   const queryOptions = getGetMedicalParticipantSuspenseQueryOptions(
+    caseId,
+    options,
+  );
+
+  const query = useSuspenseQuery(
+    queryOptions,
+    queryClient,
+  ) as UseSuspenseQueryResult<TData, TError> & {
+    queryKey: DataTag<QueryKey, TData, TError>;
+  };
+
+  query.queryKey = queryOptions.queryKey;
+
+  return query;
+}
+
+/**
+ * Get Assistance application details from the benefits360.bronze.assistance_applications table.
+ * @summary Get Assistance Application
+ */
+export const getAssistanceApplication = (
+  caseId: string,
+  options?: AxiosRequestConfig,
+): Promise<AxiosResponse<AssistanceApplicationDetailOut>> => {
+  return axios.default.get(`/api/assistance-application/${caseId}`, options);
+};
+
+export const getGetAssistanceApplicationQueryKey = (caseId?: string) => {
+  return [`/api/assistance-application/${caseId}`] as const;
+};
+
+export const getGetAssistanceApplicationQueryOptions = <
+  TData = Awaited<ReturnType<typeof getAssistanceApplication>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  caseId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAssistanceApplication>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+) => {
+  const { query: queryOptions, axios: axiosOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetAssistanceApplicationQueryKey(caseId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getAssistanceApplication>>
+  > = ({ signal }) =>
+    getAssistanceApplication(caseId, { signal, ...axiosOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!caseId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getAssistanceApplication>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetAssistanceApplicationQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getAssistanceApplication>>
+>;
+export type GetAssistanceApplicationQueryError =
+  AxiosError<HTTPValidationError>;
+
+export function useGetAssistanceApplication<
+  TData = Awaited<ReturnType<typeof getAssistanceApplication>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  caseId: string,
+  options: {
+    query: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAssistanceApplication>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAssistanceApplication>>,
+          TError,
+          Awaited<ReturnType<typeof getAssistanceApplication>>
+        >,
+        "initialData"
+      >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): DefinedUseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetAssistanceApplication<
+  TData = Awaited<ReturnType<typeof getAssistanceApplication>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  caseId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAssistanceApplication>>,
+        TError,
+        TData
+      >
+    > &
+      Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getAssistanceApplication>>,
+          TError,
+          Awaited<ReturnType<typeof getAssistanceApplication>>
+        >,
+        "initialData"
+      >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetAssistanceApplication<
+  TData = Awaited<ReturnType<typeof getAssistanceApplication>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  caseId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAssistanceApplication>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get Assistance Application
+ */
+
+export function useGetAssistanceApplication<
+  TData = Awaited<ReturnType<typeof getAssistanceApplication>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  caseId: string,
+  options?: {
+    query?: Partial<
+      UseQueryOptions<
+        Awaited<ReturnType<typeof getAssistanceApplication>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetAssistanceApplicationQueryOptions(caseId, options);
+
+  const query = useQuery(queryOptions, queryClient) as UseQueryResult<
+    TData,
+    TError
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey;
+
+  return query;
+}
+
+export const getGetAssistanceApplicationSuspenseQueryOptions = <
+  TData = Awaited<ReturnType<typeof getAssistanceApplication>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  caseId: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getAssistanceApplication>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+) => {
+  const { query: queryOptions, axios: axiosOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetAssistanceApplicationQueryKey(caseId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getAssistanceApplication>>
+  > = ({ signal }) =>
+    getAssistanceApplication(caseId, { signal, ...axiosOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseSuspenseQueryOptions<
+    Awaited<ReturnType<typeof getAssistanceApplication>>,
+    TError,
+    TData
+  > & { queryKey: DataTag<QueryKey, TData, TError> };
+};
+
+export type GetAssistanceApplicationSuspenseQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getAssistanceApplication>>
+>;
+export type GetAssistanceApplicationSuspenseQueryError =
+  AxiosError<HTTPValidationError>;
+
+export function useGetAssistanceApplicationSuspense<
+  TData = Awaited<ReturnType<typeof getAssistanceApplication>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  caseId: string,
+  options: {
+    query: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getAssistanceApplication>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetAssistanceApplicationSuspense<
+  TData = Awaited<ReturnType<typeof getAssistanceApplication>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  caseId: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getAssistanceApplication>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+export function useGetAssistanceApplicationSuspense<
+  TData = Awaited<ReturnType<typeof getAssistanceApplication>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  caseId: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getAssistanceApplication>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+};
+/**
+ * @summary Get Assistance Application
+ */
+
+export function useGetAssistanceApplicationSuspense<
+  TData = Awaited<ReturnType<typeof getAssistanceApplication>>,
+  TError = AxiosError<HTTPValidationError>,
+>(
+  caseId: string,
+  options?: {
+    query?: Partial<
+      UseSuspenseQueryOptions<
+        Awaited<ReturnType<typeof getAssistanceApplication>>,
+        TError,
+        TData
+      >
+    >;
+    axios?: AxiosRequestConfig;
+  },
+  queryClient?: QueryClient,
+): UseSuspenseQueryResult<TData, TError> & {
+  queryKey: DataTag<QueryKey, TData, TError>;
+} {
+  const queryOptions = getGetAssistanceApplicationSuspenseQueryOptions(
     caseId,
     options,
   );
